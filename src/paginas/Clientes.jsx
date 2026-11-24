@@ -9,6 +9,7 @@ import { SkeletonLinhas } from '../componentes/Skeleton'
 import Select from '../componentes/Select'
 import Checkbox from '../componentes/Checkbox'
 import { Input } from '../componentes/Input'
+import Tabela from '../componentes/Tabela'
 
 const campos = [
   { chave: 'nome', rotulo: 'Nome' },
@@ -53,27 +54,24 @@ export default function Clientes() {
           <div className="busca"><Search size={16} /><input placeholder="Buscar cliente" value={busca} onChange={(e) => setBusca(e.target.value)} /></div>
           <Checkbox interruptor checked={soDevedores} onChange={setSoDevedores}>Só com fiado em aberto</Checkbox>
         </div>
-        <div className="tabela-wrap"><table>
-          <thead><tr><th>Nome</th><th>Telefone</th><th>Documento</th><th className="direita">Limite</th><th className="direita">Saldo devedor</th><th /></tr></thead>
-          <tbody>
-            {lista === null && <SkeletonLinhas colunas={6} />}
-            {filtrada.map((c) => (
-              <tr key={c.id}>
-                <td><b>{c.nome}</b></td>
-                <td className="suave">{c.telefone || '—'}</td>
-                <td className="suave">{c.documento || '—'}</td>
-                <td className="direita num suave">{Number(c.limite_fiado) ? brl(c.limite_fiado) : 'Sem limite'}</td>
-                <td className="direita">{c.saldo > 0 ? <span className="selo alerta">{brl(c.saldo)}</span> : <span className="selo ok">Em dia</span>}</td>
-                <td className="direita">
-                  {c.saldo > 0 && <button className="btn btn-icone btn-fantasma" title="Receber" onClick={() => setRecebendo(c)}><HandCoins size={16} /></button>}
-                  <button className="btn btn-icone btn-fantasma" title="Histórico" onClick={() => setHistorico(c)}><History size={16} /></button>
-                  <button className="btn btn-icone btn-fantasma" title="Editar" onClick={() => setEditando(c)}><Pencil size={16} /></button>
-                </td>
-              </tr>
-            ))}
-            {lista && !filtrada.length && <tr><td colSpan={6} className="vazio">Nenhum cliente</td></tr>}
-          </tbody>
-        </table></div>
+        <Tabela
+          dados={lista === null ? null : filtrada}
+          vazio="Nenhum cliente"
+          ordemInicial={{ chave: 'nome', dir: 1 }}
+          colunas={[
+            { chave: 'nome', titulo: 'Nome', render: (c) => <b>{c.nome}</b> },
+            { chave: 'telefone', titulo: 'Telefone', classe: 'suave' },
+            { chave: 'documento', titulo: 'Documento', classe: 'suave' },
+            { chave: 'limite_fiado', titulo: 'Limite', tipo: 'numero', alinhar: 'direita', classe: 'num suave', render: (c) => (Number(c.limite_fiado) ? brl(c.limite_fiado) : 'Sem limite') },
+            { chave: 'saldo', titulo: 'Saldo devedor', tipo: 'numero', alinhar: 'direita', render: (c) => (c.saldo > 0 ? <span className="selo alerta">{brl(c.saldo)}</span> : <span className="selo ok">Em dia</span>) },
+          ]}
+          rodape={(l) => <span>A receber nesta lista: <b>{brl(l.reduce((s, c) => s + Math.max(0, c.saldo), 0))}</b></span>}
+          acoes={(c) => <>
+            {c.saldo > 0 && <button className="btn btn-icone btn-fantasma" title="Receber" onClick={() => setRecebendo(c)}><HandCoins size={16} /></button>}
+            <button className="btn btn-icone btn-fantasma" title="Histórico" onClick={() => setHistorico(c)}><History size={16} /></button>
+            <button className="btn btn-icone btn-fantasma" title="Editar" onClick={() => setEditando(c)}><Pencil size={16} /></button>
+          </>}
+        />
       </div>
       {editando && <FormCadastro tabela="clientes" titulo={editando.id ? 'Editar cliente' : 'Novo cliente'} registro={editando} campos={campos} podeExcluir={admin}
         onFechar={() => setEditando(null)} onSalvo={() => { setEditando(null); carregar() }} />}
@@ -128,17 +126,14 @@ function Historico({ cliente, onFechar }) {
 
   return (
     <Modal largo titulo={`Histórico — ${cliente.nome}`} onFechar={onFechar}>
-      {!linhas ? <table><tbody><SkeletonLinhas linhas={5} colunas={4} /></tbody></table> : <div className="tabela-wrap"><table>
-        <thead><tr><th>Data</th><th>Descrição</th><th className="direita">Valor</th><th className="direita">Fiado</th></tr></thead>
-        <tbody>
-          {linhas.map((l, i) => (
-            <tr key={i}><td className="suave">{dataHora(l.data)}</td><td>{l.desc}</td>
-              <td className="direita num" style={{ color: l.recebido ? 'var(--sucesso)' : undefined }}>{l.recebido ? '−' : ''}{brl(l.valor)}</td>
-              <td className="direita num">{l.fiado ? brl(l.fiado) : ''}</td></tr>
-          ))}
-          {!linhas.length && <tr><td colSpan={4} className="vazio">Sem movimentações</td></tr>}
-        </tbody>
-      </table></div>}
+      <Tabela dados={linhas} chave={(l, i) => l.data + i} vazio="Sem movimentações" ordemInicial={{ chave: 'data', dir: -1 }} colunas={[
+        { chave: 'data', titulo: 'Data', tipo: 'data', classe: 'suave', render: (l) => dataHora(l.data) },
+        { chave: 'tipo', titulo: 'Tipo', tipo: 'opcoes', valor: (l) => (l.recebido ? 'Pagamento' : 'Compra'), render: (l) => <span className={'selo ' + (l.recebido ? 'ok' : '')}>{l.recebido ? 'Pagamento' : 'Compra'}</span> },
+        { chave: 'desc', titulo: 'Descrição', quebrar: true },
+        { chave: 'valor', titulo: 'Valor', tipo: 'numero', alinhar: 'direita', classe: 'num',
+          render: (l) => <span style={{ color: l.recebido ? 'var(--sucesso)' : undefined }}>{l.recebido ? '−' : ''}{brl(l.valor)}</span> },
+        { chave: 'fiado', titulo: 'Fiado', tipo: 'numero', alinhar: 'direita', classe: 'num', render: (l) => (l.fiado ? brl(l.fiado) : '') },
+      ]} />
     </Modal>
   )
 }

@@ -8,6 +8,7 @@ import { SkeletonLinhas } from '../componentes/Skeleton'
 import Select from '../componentes/Select'
 import Checkbox from '../componentes/Checkbox'
 import { Input } from '../componentes/Input'
+import Tabela from '../componentes/Tabela'
 
 export default function Compras() {
   const [lista, setLista] = useState(null)
@@ -22,19 +23,21 @@ export default function Compras() {
         <button className="btn btn-primario" onClick={() => setNova(true)}><Plus size={16} /> Nova compra</button>
       </Cabecalho>
       <div className="card">
-        <div className="tabela-wrap"><table>
-          <thead><tr><th>#</th><th>Data</th><th>Fornecedor</th><th>Observações</th><th>Usuário</th><th className="direita">Total</th><th /></tr></thead>
-          <tbody>
-            {lista === null && <SkeletonLinhas colunas={7} />}
-            {(lista || []).map((c) => (
-              <tr key={c.id}><td>#{c.id}</td><td className="suave">{dataHora(c.criado_em)}</td><td>{c.fornecedores?.nome || '—'}</td>
-                <td className="suave">{c.observacoes || '—'}</td><td className="suave">{c.perfis?.nome || '—'}</td>
-                <td className="direita num"><b>{brl(c.total)}</b></td>
-                <td className="direita"><button className="btn btn-icone btn-fantasma" onClick={() => setVendo(c)} aria-label="Detalhes"><Eye size={16} /></button></td></tr>
-            ))}
-            {lista && !lista.length && <tr><td colSpan={7} className="vazio">Nenhuma compra registrada</td></tr>}
-          </tbody>
-        </table></div>
+        <Tabela
+          dados={lista}
+          vazio="Nenhuma compra registrada"
+          ordemInicial={{ chave: 'criado_em', dir: -1 }}
+          colunas={[
+            { chave: 'id', titulo: '#', tipo: 'numero', render: (c) => `#${c.id}` },
+            { chave: 'criado_em', titulo: 'Data', tipo: 'data', classe: 'suave', render: (c) => dataHora(c.criado_em) },
+            { chave: 'fornecedor', titulo: 'Fornecedor', tipo: 'opcoes', valor: (c) => c.fornecedores?.nome || '', render: (c) => c.fornecedores?.nome || '—' },
+            { chave: 'observacoes', titulo: 'Observações', classe: 'suave', render: (c) => c.observacoes || '—' },
+            { chave: 'usuario', titulo: 'Usuário', tipo: 'opcoes', classe: 'suave', valor: (c) => c.perfis?.nome || '', render: (c) => c.perfis?.nome || '—' },
+            { chave: 'total', titulo: 'Total', tipo: 'numero', alinhar: 'direita', classe: 'num', render: (c) => <b>{brl(c.total)}</b> },
+          ]}
+          rodape={(l) => <span>Total: <b>{brl(l.reduce((s, c) => s + Number(c.total), 0))}</b></span>}
+          acoes={(c) => <button className="btn btn-icone btn-fantasma" onClick={() => setVendo(c)} aria-label="Detalhes"><Eye size={16} /></button>}
+        />
       </div>
       {nova && <NovaCompra onFechar={() => setNova(false)} onSalvo={() => { setNova(false); carregar() }} />}
       {vendo && <DetalheCompra compra={vendo} onFechar={() => setVendo(null)} />}
@@ -118,12 +121,12 @@ function DetalheCompra({ compra, onFechar }) {
   return (
     <Modal largo titulo={`Compra #${compra.id}`} onFechar={onFechar}>
       <p className="suave" style={{ marginTop: 0 }}>{dataHora(compra.criado_em)} · {compra.fornecedores?.nome || 'Sem fornecedor'}</p>
-      <div className="tabela-wrap"><table>
-        <thead><tr><th>Produto</th><th className="direita">Qtd</th><th className="direita">Custo</th><th className="direita">Subtotal</th></tr></thead>
-        <tbody>{itens === null && <SkeletonLinhas linhas={3} colunas={4} />}{(itens || []).map((i) => (
-          <tr key={i.id}><td>{nomeVariacao(i.variacoes)}</td><td className="direita num">{num(i.quantidade)}</td><td className="direita num">{brl(i.custo_unitario)}</td><td className="direita num">{brl(i.quantidade * i.custo_unitario)}</td></tr>
-        ))}</tbody>
-      </table></div>
+      <Tabela dados={itens} colunas={[
+        { chave: 'produto', titulo: 'Produto', valor: (i) => nomeVariacao(i.variacoes), quebrar: true },
+        { chave: 'quantidade', titulo: 'Qtd', tipo: 'numero', alinhar: 'direita', classe: 'num', render: (i) => num(i.quantidade) },
+        { chave: 'custo_unitario', titulo: 'Custo', tipo: 'numero', alinhar: 'direita', classe: 'num', render: (i) => brl(i.custo_unitario) },
+        { chave: 'subtotal', titulo: 'Subtotal', tipo: 'numero', alinhar: 'direita', classe: 'num', valor: (i) => i.quantidade * i.custo_unitario, render: (i) => brl(i.quantidade * i.custo_unitario) },
+      ]} />
       <p style={{ textAlign: 'right', fontWeight: 700 }}>Total: {brl(compra.total)}</p>
     </Modal>
   )

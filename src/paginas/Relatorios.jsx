@@ -4,6 +4,8 @@ import { supabase } from '../lib/supabase'
 import { brl, num, formasPagamento, nomeVariacao } from '../lib/formato'
 import { Cabecalho } from '../componentes/ui'
 import { SkeletonKpis, SkeletonCard } from '../componentes/Skeleton'
+import Tabela from '../componentes/Tabela'
+import { Periodo } from '../componentes/CampoData'
 
 const iso = (d) => d.toLocaleDateString('sv-SE')
 
@@ -64,9 +66,7 @@ export default function Relatorios() {
   return (
     <>
       <Cabecalho titulo="Relatórios" descricao="Desempenho de vendas e valor em estoque">
-        <input type="date" value={de} onChange={(e) => setDe(e.target.value)} style={{ width: 160 }} />
-        <span className="suave">até</span>
-        <input type="date" value={ate} onChange={(e) => setAte(e.target.value)} style={{ width: 160 }} />
+        <Periodo de={de} ate={ate} onChange={(a, b) => { setDe(a); setAte(b) }} />
         {r && <button className="btn" onClick={exportarCSV}>Exportar CSV</button>}
       </Cabecalho>
       {!r ? <><SkeletonKpis /><div style={{ marginTop: 16 }}><SkeletonCard altura={240} /></div></> : <>
@@ -93,13 +93,18 @@ export default function Relatorios() {
         <div className="grade grade-2" style={{ marginTop: 16 }}>
           <div className="card">
             <h2 style={{ marginBottom: 10 }}>Produtos mais vendidos</h2>
-            <div className="tabela-wrap"><table>
-              <thead><tr><th>Produto</th><th className="direita">Qtd</th><th className="direita">Receita</th><th className="direita">Lucro</th></tr></thead>
-              <tbody>
-                {r.produtos.slice(0, 15).map((p, i) => <tr key={i}><td>{p.nome}</td><td className="direita num">{num(p.qtd)}</td><td className="direita num">{brl(p.receita)}</td><td className="direita num">{brl(p.lucro)}</td></tr>)}
-                {!r.produtos.length && <tr><td colSpan={4} className="vazio">Sem vendas no período</td></tr>}
-              </tbody>
-            </table></div>
+            <Tabela
+              dados={r.produtos}
+              chave={(p) => p.nome}
+              vazio="Sem vendas no período"
+              ordemInicial={{ chave: 'receita', dir: -1 }}
+              colunas={[
+                { chave: 'nome', titulo: 'Produto', quebrar: true },
+                { chave: 'qtd', titulo: 'Qtd', tipo: 'numero', alinhar: 'direita', classe: 'num', render: (p) => num(p.qtd) },
+                { chave: 'receita', titulo: 'Receita', tipo: 'numero', alinhar: 'direita', classe: 'num', render: (p) => brl(p.receita) },
+                { chave: 'lucro', titulo: 'Lucro', tipo: 'numero', alinhar: 'direita', classe: 'num', render: (p) => brl(p.lucro) },
+              ]}
+            />
           </div>
           <div>
             <div className="card">

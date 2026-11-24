@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { X, Package, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { tema } from '../tema'
 
 /* ---------- Avisos (toasts) ---------- */
@@ -61,7 +62,7 @@ export function Modal({ titulo, onFechar, children, rodape, largo }) {
     return () => { window.removeEventListener('keydown', k); document.body.style.overflow = overflow }
   }, [fechar])
 
-  return (
+  return createPortal(
     <div className={'modal-fundo' + (saindo ? ' saindo' : '')} onMouseDown={(e) => e.target === e.currentTarget && fechar()}>
       <div className={'modal' + (largo ? ' largo' : '')} role="dialog" aria-modal="true" aria-label={titulo}>
         <div className="modal-topo">
@@ -71,7 +72,8 @@ export function Modal({ titulo, onFechar, children, rodape, largo }) {
         <div className="modal-corpo">{children}</div>
         {rodape && <div className="modal-rodape">{rodape}</div>}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

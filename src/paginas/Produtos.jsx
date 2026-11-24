@@ -9,6 +9,7 @@ import { SkeletonLinhas } from '../componentes/Skeleton'
 import Select from '../componentes/Select'
 import Checkbox from '../componentes/Checkbox'
 import { Input } from '../componentes/Input'
+import Tabela from '../componentes/Tabela'
 
 const novaVariacao = () => ({ nome: 'Padrão', sku: '', codigo_barras: '', preco_custo: '', preco_venda: '', estoque: '', estoque_minimo: '' })
 
@@ -55,29 +56,25 @@ export default function Produtos() {
           <Select style={{ width: 180 }} value={filtro} onChange={setFiltro} limpar={false}
             options={[{ value: '', label: 'Todo o estoque' }, { value: 'baixo', label: 'Estoque baixo', descricao: 'No mínimo ou abaixo' }, { value: 'zerado', label: 'Sem estoque' }]} />
         </div>
-        <div className="tabela-wrap"><table>
-          <thead><tr><th>Produto</th><th>Variação</th><th>Código</th>{admin && <th className="direita">Custo</th>}<th className="direita">Preço</th><th className="direita">Estoque</th>{admin && <th />}</tr></thead>
-          <tbody>
-            {produtos === null && <SkeletonLinhas colunas={admin ? 7 : 5} />}
-            {lista.flatMap((p) => p.variacoes.map((v, i) => (
-              <tr key={v.id}>
-                <td>{i === 0 && <><b>{p.nome}</b><div className="suave" style={{ fontSize: 12 }}>{p.categorias?.nome}</div></>}</td>
-                <td>{v.nome}</td>
-                <td className="suave num">{v.codigo_barras || v.sku || '—'}</td>
-                {admin && <td className="direita num">{brl(v.preco_custo)}</td>}
-                <td className="direita num">{brl(v.preco_venda)}</td>
-                <td className="direita">
-                  <span className={'selo ' + (v.estoque <= 0 ? 'perigo' : Number(v.estoque) <= Number(v.estoque_minimo) ? 'alerta' : 'ok')}>{num(v.estoque)}</span>
-                </td>
-                {admin && <td className="direita">
-                  <button className="btn btn-icone btn-fantasma" title="Ajustar estoque" onClick={() => setAjuste({ v, p })}><SlidersHorizontal size={16} /></button>
-                  {i === 0 && <button className="btn btn-icone btn-fantasma" title="Editar" onClick={() => setEditando(p)}><Pencil size={16} /></button>}
-                </td>}
-              </tr>
-            )))}
-            {produtos && !lista.length && <tr><td colSpan={7} className="vazio">Nenhum produto encontrado</td></tr>}
-          </tbody>
-        </table></div>
+        <Tabela
+          dados={produtos === null ? null : lista.flatMap((p) => p.variacoes.map((v) => ({ ...v, p })))}
+          vazio="Nenhum produto encontrado"
+          ordemInicial={{ chave: 'produto', dir: 1 }}
+          colunas={[
+            { chave: 'produto', titulo: 'Produto', valor: (v) => v.p.nome, render: (v) => <b>{v.p.nome}</b> },
+            { chave: 'categoria', titulo: 'Categoria', tipo: 'opcoes', valor: (v) => v.p.categorias?.nome || '', classe: 'suave', render: (v) => v.p.categorias?.nome || '—' },
+            { chave: 'nome', titulo: 'Variação', tipo: 'opcoes' },
+            { chave: 'codigo', titulo: 'Código', valor: (v) => v.codigo_barras || v.sku || '', classe: 'suave num', render: (v) => v.codigo_barras || v.sku || '—' },
+            ...(admin ? [{ chave: 'preco_custo', titulo: 'Custo', tipo: 'numero', alinhar: 'direita', classe: 'num', render: (v) => brl(v.preco_custo) }] : []),
+            { chave: 'preco_venda', titulo: 'Preço', tipo: 'numero', alinhar: 'direita', classe: 'num', render: (v) => brl(v.preco_venda) },
+            { chave: 'estoque', titulo: 'Estoque', tipo: 'numero', alinhar: 'direita',
+              render: (v) => <span className={'selo ' + (v.estoque <= 0 ? 'perigo' : Number(v.estoque) <= Number(v.estoque_minimo) ? 'alerta' : 'ok')}>{num(v.estoque)}</span> },
+          ]}
+          acoes={admin ? (v) => <>
+            <button className="btn btn-icone btn-fantasma" title="Ajustar estoque" onClick={() => setAjuste({ v, p: v.p })}><SlidersHorizontal size={16} /></button>
+            <button className="btn btn-icone btn-fantasma" title="Editar produto" onClick={() => setEditando(v.p)}><Pencil size={16} /></button>
+          </> : undefined}
+        />
       </div>
       {editando && <EditarProduto produto={editando} categorias={categorias} onFechar={() => setEditando(null)} onSalvo={() => { setEditando(null); carregar() }} />}
       {ajuste && <AjustarEstoque {...ajuste} onFechar={() => setAjuste(null)} onSalvo={() => { setAjuste(null); carregar() }} />}

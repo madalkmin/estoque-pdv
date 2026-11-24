@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { Cabecalho } from '../componentes/ui'
 import { FormCadastro } from '../componentes/Cadastro'
 import { SkeletonLinhas } from '../componentes/Skeleton'
+import Tabela from '../componentes/Tabela'
 
 const campos = [
   { chave: 'nome', rotulo: 'Nome / Razão social' },
@@ -28,17 +29,18 @@ export default function Fornecedores() {
       </Cabecalho>
       <div className="card">
         <div className="busca" style={{ marginBottom: 14 }}><Search size={16} /><input placeholder="Buscar fornecedor" value={busca} onChange={(e) => setBusca(e.target.value)} /></div>
-        <div className="tabela-wrap"><table>
-          <thead><tr><th>Nome</th><th>Documento</th><th>Telefone</th><th>E-mail</th><th /></tr></thead>
-          <tbody>
-            {lista === null && <SkeletonLinhas colunas={5} />}
-            {filtrada.map((f) => (
-              <tr key={f.id}><td><b>{f.nome}</b></td><td className="suave">{f.documento || '—'}</td><td className="suave">{f.telefone || '—'}</td><td className="suave">{f.email || '—'}</td>
-                <td className="direita"><button className="btn btn-icone btn-fantasma" onClick={() => setEditando(f)} aria-label="Editar"><Pencil size={16} /></button></td></tr>
-            ))}
-            {lista && !filtrada.length && <tr><td colSpan={5} className="vazio">Nenhum fornecedor</td></tr>}
-          </tbody>
-        </table></div>
+        <Tabela
+          dados={lista === null ? null : filtrada}
+          vazio="Nenhum fornecedor"
+          ordemInicial={{ chave: 'nome', dir: 1 }}
+          colunas={[
+            { chave: 'nome', titulo: 'Nome', render: (f) => <b>{f.nome}</b> },
+            { chave: 'documento', titulo: 'Documento', classe: 'suave' },
+            { chave: 'telefone', titulo: 'Telefone', classe: 'suave' },
+            { chave: 'email', titulo: 'E-mail', classe: 'suave' },
+          ]}
+          acoes={(f) => <button className="btn btn-icone btn-fantasma" onClick={() => setEditando(f)} aria-label="Editar"><Pencil size={16} /></button>}
+        />
       </div>
       {editando && <FormCadastro tabela="fornecedores" titulo={editando.id ? 'Editar fornecedor' : 'Novo fornecedor'} registro={editando} campos={campos} podeExcluir
         onFechar={() => setEditando(null)} onSalvo={() => { setEditando(null); carregar() }} />}

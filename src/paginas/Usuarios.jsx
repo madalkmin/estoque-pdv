@@ -5,6 +5,7 @@ import { data } from '../lib/formato'
 import { Cabecalho, useAcao } from '../componentes/ui'
 import { SkeletonLinhas } from '../componentes/Skeleton'
 import Select from '../componentes/Select'
+import Tabela from '../componentes/Tabela'
 
 export default function Usuarios() {
   const { perfil } = useAuth()
@@ -19,32 +20,23 @@ export default function Usuarios() {
     <>
       <Cabecalho titulo="Usuários" descricao="Novos funcionários se cadastram na tela de login e aparecem aqui para aprovação" />
       <div className="card">
-        <div className="tabela-wrap"><table>
-          <thead><tr><th>Nome</th><th>E-mail</th><th>Desde</th><th>Papel</th><th>Situação</th><th /></tr></thead>
-          <tbody>
-            {lista === null && <SkeletonLinhas linhas={3} colunas={6} />}
-            {(lista || []).map((u) => {
-              const eu = u.id === perfil.id
-              return (
-                <tr key={u.id}>
-                  <td><b>{u.nome}</b>{eu && <span className="suave"> (você)</span>}</td>
-                  <td className="suave">{u.email}</td>
-                  <td className="suave">{data(u.criado_em)}</td>
-                  <td>
-                    <Select tamanho="p" value={u.papel} disabled={eu} style={{ width: 170 }} onChange={(v) => v !== u.papel && alterar(u, { papel: v }, 'Papel atualizado')}
-                      options={[{ value: 'operador', label: 'Operador', descricao: 'Caixa e consultas' }, { value: 'admin', label: 'Administrador', descricao: 'Acesso total' }]} />
-                  </td>
-                  <td>{u.ativo ? <span className="selo ok">Ativo</span> : <span className="selo alerta">Aguardando</span>}</td>
-                  <td className="direita">
-                    {!eu && (u.ativo
-                      ? <button className="btn btn-perigo" onClick={() => confirm(`Bloquear o acesso de ${u.nome}?`) && alterar(u, { ativo: false }, 'Acesso bloqueado')}>Bloquear</button>
-                      : <button className="btn btn-primario" onClick={() => alterar(u, { ativo: true }, 'Acesso liberado')}>Liberar acesso</button>)}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table></div>
+        <Tabela
+          dados={lista}
+          ordemInicial={{ chave: 'criado_em', dir: 1 }}
+          colunas={[
+            { chave: 'nome', titulo: 'Nome', render: (u) => <><b>{u.nome}</b>{u.id === perfil.id && <span className="suave"> (você)</span>}</> },
+            { chave: 'email', titulo: 'E-mail', classe: 'suave' },
+            { chave: 'criado_em', titulo: 'Desde', tipo: 'data', classe: 'suave', render: (u) => data(u.criado_em) },
+            { chave: 'papel', titulo: 'Papel', tipo: 'opcoes', rotulo: (p) => (p === 'admin' ? 'Administrador' : 'Operador'),
+              render: (u) => <Select tamanho="p" value={u.papel} disabled={u.id === perfil.id} style={{ width: 170 }} onChange={(v) => v !== u.papel && alterar(u, { papel: v }, 'Papel atualizado')}
+                options={[{ value: 'operador', label: 'Operador', descricao: 'Caixa e consultas' }, { value: 'admin', label: 'Administrador', descricao: 'Acesso total' }]} /> },
+            { chave: 'ativo', titulo: 'Situação', tipo: 'opcoes', rotulo: (a) => (a === 'true' ? 'Ativo' : 'Aguardando'),
+              render: (u) => (u.ativo ? <span className="selo ok">Ativo</span> : <span className="selo alerta">Aguardando</span>) },
+          ]}
+          acoes={(u) => u.id !== perfil.id && (u.ativo
+            ? <button className="btn btn-perigo" onClick={() => confirm(`Bloquear o acesso de ${u.nome}?`) && alterar(u, { ativo: false }, 'Acesso bloqueado')}>Bloquear</button>
+            : <button className="btn btn-primario" onClick={() => alterar(u, { ativo: true }, 'Acesso liberado')}>Liberar acesso</button>)}
+        />
       </div>
     </>
   )

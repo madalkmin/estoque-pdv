@@ -6,6 +6,7 @@ import { useAuth } from '../lib/auth'
 import { brl, num, inicioDoDia, nomeVariacao, dataHora } from '../lib/formato'
 import { Cabecalho } from '../componentes/ui'
 import { SkeletonKpis, SkeletonCard } from '../componentes/Skeleton'
+import Tabela from '../componentes/Tabela'
 
 export default function Dashboard() {
   const { perfil, admin } = useAuth()
@@ -51,31 +52,31 @@ export default function Dashboard() {
               <h2><AlertTriangle size={17} style={{ verticalAlign: -3, color: 'var(--alerta)' }} /> Estoque baixo</h2>
               <Link to="/produtos">Ver produtos</Link>
             </div>
-            <div className="tabela-wrap"><table>
-              <thead><tr><th>Produto</th><th className="direita">Atual</th><th className="direita">Mínimo</th></tr></thead>
-              <tbody>
-                {d.baixo.slice(0, 8).map((v) => (
-                  <tr key={v.id}><td>{nomeVariacao(v)}</td>
-                    <td className="direita"><span className={'selo ' + (v.estoque <= 0 ? 'perigo' : 'alerta')}>{num(v.estoque)}</span></td>
-                    <td className="direita num">{num(v.estoque_minimo)}</td></tr>
-                ))}
-                {!d.baixo.length && <tr><td colSpan={3} className="vazio">Nenhum produto abaixo do mínimo</td></tr>}
-              </tbody>
-            </table></div>
+            <Tabela
+              dados={d.baixo}
+              vazio="Nenhum produto abaixo do mínimo"
+              colunas={[
+                { chave: 'produto', titulo: 'Produto', valor: (v) => nomeVariacao(v) },
+                { chave: 'estoque', titulo: 'Atual', tipo: 'numero', alinhar: 'direita', render: (v) => <span className={'selo ' + (v.estoque <= 0 ? 'perigo' : 'alerta')}>{num(v.estoque)}</span> },
+                { chave: 'estoque_minimo', titulo: 'Mínimo', tipo: 'numero', alinhar: 'direita', classe: 'num', render: (v) => num(v.estoque_minimo) },
+              ]}
+            />
           </div>
           <div className="card">
             <div className="linha" style={{ justifyContent: 'space-between', marginBottom: 10 }}>
               <h2>Últimas vendas</h2><Link to="/vendas">Ver todas</Link>
             </div>
-            <div className="tabela-wrap"><table>
-              <tbody>
-                {d.ultimas.map((v) => (
-                  <tr key={v.id}><td>#{v.id}</td><td className="suave">{dataHora(v.criado_em)}</td><td>{v.clientes?.nome || '—'}</td>
-                    <td className="direita num">{v.status === 'cancelada' ? <span className="selo perigo">Cancelada</span> : brl(v.total)}</td></tr>
-                ))}
-                {!d.ultimas.length && <tr><td className="vazio">Nenhuma venda ainda</td></tr>}
-              </tbody>
-            </table></div>
+            <Tabela
+              dados={d.ultimas}
+              vazio="Nenhuma venda ainda"
+              colunas={[
+                { chave: 'id', titulo: '#', tipo: 'numero', render: (v) => `#${v.id}` },
+                { chave: 'criado_em', titulo: 'Data', tipo: 'data', classe: 'suave', render: (v) => dataHora(v.criado_em) },
+                { chave: 'cliente', titulo: 'Cliente', tipo: 'opcoes', valor: (v) => v.clientes?.nome || '', render: (v) => v.clientes?.nome || '—' },
+                { chave: 'total', titulo: 'Total', tipo: 'numero', alinhar: 'direita', classe: 'num',
+                  render: (v) => (v.status === 'cancelada' ? <span className="selo perigo">Cancelada</span> : brl(v.total)) },
+              ]}
+            />
           </div>
         </div>
       </>}

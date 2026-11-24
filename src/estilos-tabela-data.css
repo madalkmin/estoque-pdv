@@ -1,0 +1,126 @@
+/* =========================================================
+   POPOVER
+   ========================================================= */
+.pop {
+  position: fixed; z-index: 320; background: var(--superficie); border: 1px solid var(--borda); border-radius: 14px;
+  box-shadow: var(--sombra-3); animation: sel-abrir .2s var(--ease-out); transform-origin: top center;
+}
+.pop.para-cima { transform-origin: bottom center; animation-name: sel-abrir-cima; }
+
+/* =========================================================
+   CAMPO DE DATA + CALENDÁRIO
+   ========================================================= */
+.data { position: relative; display: flex; align-items: center; width: 100%; }
+.data input { padding-right: 38px; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.data .data-limpar ~ .data-btn, .data:has(.data-limpar) input { padding-right: 64px; }
+.data-btn {
+  position: absolute; right: 4px; width: 30px; height: 30px; display: grid; place-items: center; border: 0; background: none;
+  color: var(--texto-suave); border-radius: 7px; cursor: pointer; transition: background .15s, color .15s, transform .2s var(--ease-spring);
+}
+.data-btn:hover:not(:disabled) { background: var(--fundo); color: var(--primaria); }
+.data-btn:active:not(:disabled) { transform: scale(.9); }
+.data-limpar { right: 32px; }
+.data-aberta input { border-color: var(--primaria); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primaria) 18%, transparent); }
+.data-aberta .data-btn:last-of-type { color: var(--primaria); }
+.data-erro input { border-color: var(--perigo); animation: balancar .35s; }
+
+.cal { padding: 12px; user-select: none; }
+.cal-topo { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cal-titulo { border: 0; background: none; font: inherit; font-weight: 700; font-size: 14px; color: var(--texto); padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: background .15s; }
+.cal-titulo span { color: var(--texto-suave); font-weight: 600; }
+.cal-titulo:hover { background: var(--fundo); }
+.cal-nav { width: 32px; height: 32px; display: grid; place-items: center; border: 0; background: none; border-radius: 8px; color: var(--texto-suave); cursor: pointer; transition: background .15s, color .15s, transform .2s var(--ease-spring); }
+.cal-nav:hover { background: var(--fundo); color: var(--texto); }
+.cal-nav:active { transform: scale(.88); }
+.cal-semana, .cal-dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.cal-semana span { text-align: center; font-size: 11px; font-weight: 700; color: var(--texto-suave); padding: 4px 0; }
+.cal-dias { animation: aparecer .2s ease; }
+.cal-dias.prox { animation: cal-prox .25s var(--ease-out); }
+.cal-dias.ant { animation: cal-ant .25s var(--ease-out); }
+@keyframes cal-prox { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+@keyframes cal-ant { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+.cal-dia {
+  height: 34px; border: 0; background: none; border-radius: 9px; font: inherit; font-size: 13px; color: var(--texto); cursor: pointer;
+  font-variant-numeric: tabular-nums; position: relative; transition: background .12s, color .12s, transform .15s var(--ease-spring);
+}
+.cal-dia:hover:not(:disabled) { background: var(--fundo); }
+.cal-dia:active:not(:disabled) { transform: scale(.9); }
+.cal-dia.outro { color: color-mix(in srgb, var(--texto-suave) 60%, transparent); }
+.cal-dia.hoje { font-weight: 700; color: var(--primaria); }
+.cal-dia.hoje::after { content: ""; position: absolute; bottom: 5px; left: 50%; width: 4px; height: 4px; margin-left: -2px; border-radius: 99px; background: currentColor; }
+.cal-dia.faixa { background: color-mix(in srgb, var(--primaria) 10%, transparent); border-radius: 0; }
+.cal-dia.sel { background: var(--primaria); color: var(--primaria-texto); font-weight: 700; animation: pop .25s var(--ease-spring); box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--primaria) 70%, transparent); }
+.cal-dia:disabled { opacity: .3; cursor: not-allowed; }
+.cal-grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; animation: entrar-escala .2s var(--ease-out); }
+.cal-cel { height: 44px; border: 0; background: none; border-radius: 10px; font: inherit; font-weight: 600; color: var(--texto); cursor: pointer; transition: background .12s; }
+.cal-cel:hover { background: var(--fundo); }
+.cal-cel.sel { background: var(--primaria); color: var(--primaria-texto); }
+.cal-rodape { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--borda); margin-top: 10px; padding-top: 10px; font-size: 12px; }
+.cal-rodape button { border: 0; background: color-mix(in srgb, var(--primaria) 10%, transparent); color: var(--primaria); font: inherit; font-weight: 700; padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: background .15s; }
+.cal-rodape button:hover:not(:disabled) { background: color-mix(in srgb, var(--primaria) 18%, transparent); }
+
+.periodo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.periodo-atalhos { display: flex; padding: 3px; border-radius: 10px; background: color-mix(in srgb, var(--borda) 60%, var(--fundo)); }
+.periodo-atalhos button { border: 0; background: none; font: inherit; font-size: 12px; font-weight: 600; color: var(--texto-suave); padding: 7px 10px; border-radius: 8px; cursor: pointer; transition: background .2s, color .2s; white-space: nowrap; }
+.periodo-atalhos button:hover { color: var(--texto); }
+.periodo-atalhos button.ativo { background: var(--superficie); color: var(--primaria); box-shadow: var(--sombra-1); }
+
+/* =========================================================
+   TABELA
+   ========================================================= */
+.tab th { padding-top: 8px; padding-bottom: 8px; }
+.th { display: flex; align-items: center; gap: 2px; }
+th.direita .th { justify-content: flex-end; }
+.th-titulo {
+  display: inline-flex; align-items: center; gap: 5px; border: 0; background: none; padding: 4px 6px; margin-left: -6px; border-radius: 6px;
+  font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; transition: background .15s, color .15s;
+}
+.th-titulo:disabled { cursor: default; }
+.th-titulo:hover:not(:disabled) { background: var(--fundo); color: var(--texto); }
+.th-ordem { display: grid; opacity: .35; transition: opacity .15s, transform .25s var(--ease-spring); }
+.th-titulo:hover .th-ordem { opacity: .8; }
+th.ordenada { color: var(--primaria); }
+th.ordenada .th-ordem { opacity: 1; animation: pop .25s var(--ease-spring); }
+.th-filtro {
+  width: 22px; height: 22px; display: grid; place-items: center; border: 0; background: none; border-radius: 6px; color: var(--texto-suave);
+  cursor: pointer; opacity: 0; position: relative; transition: opacity .15s, background .15s, color .15s;
+}
+th:hover .th-filtro, .th-filtro:focus-visible, .th-filtro.ativo, .th-filtro.aberto { opacity: 1; }
+.th-filtro:hover, .th-filtro.aberto { background: var(--fundo); color: var(--texto); }
+.th-filtro.ativo { color: var(--primaria); background: color-mix(in srgb, var(--primaria) 12%, transparent); }
+.th-filtro.ativo::after { content: ""; position: absolute; top: 2px; right: 2px; width: 6px; height: 6px; border-radius: 99px; background: var(--primaria); border: 1.5px solid var(--superficie); animation: pop .3s var(--ease-spring); }
+@media (hover: none) { .th-filtro { opacity: .7; } }
+.tab-acoes { width: 1%; }
+
+.tab-filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 12px; font-size: 12px; animation: entrar-cima .25s var(--ease-out); }
+.tab-chip {
+  display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 4px 0 10px; border-radius: 99px;
+  background: color-mix(in srgb, var(--primaria) 10%, transparent); color: var(--primaria); animation: pop .25s var(--ease-spring);
+}
+.tab-chip b { font-weight: 700; }
+.tab-chip button { width: 18px; height: 18px; display: grid; place-items: center; border: 0; border-radius: 99px; background: none; color: inherit; cursor: pointer; }
+.tab-chip button:hover { background: color-mix(in srgb, var(--primaria) 20%, transparent); }
+.tab-limpar { border: 0; background: none; color: var(--texto-suave); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; }
+.tab-limpar:hover { color: var(--perigo); }
+.tab-rodape { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 12px; margin-top: 4px; border-top: 1px solid var(--borda); font-size: 12px; color: var(--texto-suave); }
+
+.filtro { padding: 12px; display: grid; gap: 10px; }
+.filtro-titulo { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .04em; }
+.filtro-busca { position: relative; }
+.filtro-busca svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--texto-suave); }
+.filtro-busca input { padding-left: 32px; height: 36px; }
+.filtro-faixa { display: grid; gap: 8px; }
+.filtro-faixa label { display: grid; gap: 4px; font-size: 12px; font-weight: 600; color: var(--texto-suave); }
+.filtro-lista { max-height: 220px; overflow-y: auto; margin: 0 -4px; overscroll-behavior: contain; }
+.filtro-op { display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: 8px; cursor: pointer; transition: background .12s; position: relative; }
+.filtro-op:hover { background: var(--fundo); }
+.filtro-op input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.filtro-op .chk-caixa { margin-top: 0; }
+.filtro-op-r { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.filtro-op small { color: var(--texto-suave); font-variant-numeric: tabular-nums; background: var(--fundo); border-radius: 99px; padding: 1px 7px; font-size: 11px; }
+.filtro-todos { border-bottom: 1px solid var(--borda); border-radius: 8px 8px 0 0; margin-bottom: 2px; font-weight: 600; }
+.filtro-acoes { display: flex; justify-content: flex-end; gap: 6px; border-top: 1px solid var(--borda); padding-top: 10px; }
+.filtro-acoes .btn { height: 32px; }
+
+button:focus-visible, a:focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; }
+.data-btn:focus-visible, .th-filtro:focus-visible, .cal-dia:focus-visible { outline-offset: 0; }

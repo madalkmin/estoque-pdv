@@ -4,6 +4,7 @@ import { num, dataHora, nomeVariacao } from '../lib/formato'
 import { Cabecalho } from '../componentes/ui'
 import { SkeletonLinhas } from '../componentes/Skeleton'
 import Select from '../componentes/Select'
+import Tabela from '../componentes/Tabela'
 
 const tipos = { entrada: 'Entrada', saida: 'Saída', ajuste: 'Ajuste', venda: 'Venda', compra: 'Compra', cancelamento: 'Cancelamento' }
 
@@ -26,24 +27,21 @@ export default function Movimentacoes() {
         <Select multi value={tipo} onChange={setTipo} style={{ width: 220 }} todosLabel="Todos os tipos" options={Object.entries(tipos).map(([value, label]) => ({ value, label }))} />
       </Cabecalho>
       <div className="card">
-        <div className="tabela-wrap"><table>
-          <thead><tr><th>Data</th><th>Produto</th><th>Tipo</th><th className="direita">Qtd</th><th className="direita">Saldo</th><th>Motivo</th><th>Usuário</th></tr></thead>
-          <tbody>
-            {lista === null && <SkeletonLinhas colunas={7} />}
-            {(lista || []).map((m) => (
-              <tr key={m.id}>
-                <td className="suave">{dataHora(m.criado_em)}</td>
-                <td>{m.variacoes ? nomeVariacao(m.variacoes) : '—'}</td>
-                <td><span className="selo">{tipos[m.tipo]}</span></td>
-                <td className="direita num" style={{ color: m.quantidade < 0 ? 'var(--perigo)' : 'var(--sucesso)' }}>{m.quantidade > 0 ? '+' : ''}{num(m.quantidade)}</td>
-                <td className="direita num">{num(m.estoque_resultante)}</td>
-                <td className="suave">{m.motivo || '—'}</td>
-                <td className="suave">{m.perfis?.nome || '—'}</td>
-              </tr>
-            ))}
-            {lista && !lista.length && <tr><td colSpan={7} className="vazio">Nenhuma movimentação</td></tr>}
-          </tbody>
-        </table></div>
+        <Tabela
+          dados={lista}
+          vazio="Nenhuma movimentação"
+          ordemInicial={{ chave: 'criado_em', dir: -1 }}
+          colunas={[
+            { chave: 'criado_em', titulo: 'Data', tipo: 'data', classe: 'suave', render: (m) => dataHora(m.criado_em) },
+            { chave: 'produto', titulo: 'Produto', valor: (m) => (m.variacoes ? nomeVariacao(m.variacoes) : '') },
+            { chave: 'tipo', titulo: 'Tipo', tipo: 'opcoes', rotulo: (t) => tipos[t] || t, render: (m) => <span className="selo">{tipos[m.tipo]}</span> },
+            { chave: 'quantidade', titulo: 'Qtd', tipo: 'numero', alinhar: 'direita', classe: 'num',
+              render: (m) => <span style={{ color: m.quantidade < 0 ? 'var(--perigo)' : 'var(--sucesso)' }}>{m.quantidade > 0 ? '+' : ''}{num(m.quantidade)}</span> },
+            { chave: 'estoque_resultante', titulo: 'Saldo', tipo: 'numero', alinhar: 'direita', classe: 'num', render: (m) => num(m.estoque_resultante) },
+            { chave: 'motivo', titulo: 'Motivo', classe: 'suave', render: (m) => m.motivo || '—' },
+            { chave: 'usuario', titulo: 'Usuário', tipo: 'opcoes', classe: 'suave', valor: (m) => m.perfis?.nome || '', render: (m) => m.perfis?.nome || '—' },
+          ]}
+        />
         {lista?.length >= limite && <button className="btn" style={{ marginTop: 12 }} onClick={() => setLimite(limite + 100)}>Carregar mais</button>}
       </div>
     </>
