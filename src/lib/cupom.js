@@ -1,4 +1,7 @@
 import { brl, num, dataHora, formasPagamento } from './formato'
+import { alertar } from './notificar'
+
+const alertarPopup = () => alertar({ titulo: 'Impressão bloqueada', mensagem: 'O navegador bloqueou a janela de impressão. Permita pop-ups para este site (ícone na barra de endereço) e tente de novo.', tipo: 'alerta' })
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 
@@ -37,7 +40,7 @@ export function imprimirCupom({ venda, itens, pagamentos, cliente, config, opera
   </body></html>`
 
   const w = window.open('', '_blank', 'width=400,height=600')
-  if (!w) return alert('Permita pop-ups para imprimir o cupom.')
+  if (!w) return alertarPopup()
   w.document.write(html)
   w.document.close()
 }
@@ -79,7 +82,7 @@ export function imprimirFechamento(r, config) {
     <script>window.onload = () => { window.print(); setTimeout(() => window.close(), 300) }</script>
   </body></html>`
   const w = window.open('', '_blank', 'width=400,height=600')
-  if (!w) return alert('Permita pop-ups para imprimir.')
+  if (!w) return alertarPopup()
   w.document.write(html)
   w.document.close()
 }

@@ -11,6 +11,7 @@ import { Input } from '../componentes/Input'
 import { sanitizar, validacoes, mascaras } from '../lib/mascaras'
 import { Link } from 'react-router-dom'
 import { useCaixaAberto, AbrirCaixa, MovimentoCaixa } from '../componentes/CaixaModais'
+import { confirmar, toast } from '../lib/notificar'
 
 const iconesForma = { dinheiro: Banknote, pix: QrCode, credito: CreditCard, debito: Wallet, fiado: NotebookPen }
 
@@ -186,7 +187,7 @@ export default function PDV() {
         </div>
         <div style={{ margin: '14px 0' }}><div className="suave">Total</div><div className="resumo-total mudou" key={total}>{brl(total)}</div></div>
         <button className="btn btn-primario btn-grande" style={{ width: '100%' }} disabled={!carrinho.length || !caixa} onClick={() => setPagando(true)}>Finalizar venda <kbd className="kbd-btn">F2</kbd></button>
-        <button className="btn btn-fantasma" style={{ width: '100%', marginTop: 8 }} disabled={!carrinho.length} onClick={() => confirm('Cancelar esta venda?') && limpar()}>Cancelar venda</button>
+        <button className="btn btn-fantasma" style={{ width: '100%', marginTop: 8 }} disabled={!carrinho.length} onClick={async () => (await confirmar({ titulo: 'Cancelar venda?', mensagem: 'Todos os itens do carrinho serão removidos.', tipo: 'perigo', confirmar: 'Cancelar venda', cancelar: 'Voltar' })) && limpar()}>Cancelar venda</button>
       </div>
 
       {escolherCliente && <SelecionarCliente clientes={clientes} onFechar={() => setEscolherCliente(false)}
@@ -254,8 +255,8 @@ function Pagamento({ total, cliente, config, onFechar, onConfirmar }) {
     e?.preventDefault()
     const v = parseNum(valor)
     if (v <= 0) return
-    if (forma !== 'dinheiro' && v > falta + 0.001) return alert('Somente dinheiro pode ultrapassar o valor (para troco).')
-    if (forma === 'fiado' && !cliente) return alert('Selecione um cliente para vender fiado.')
+    if (forma !== 'dinheiro' && v > falta + 0.001) return toast('Somente dinheiro pode passar do valor restante (para gerar troco).', 'alerta')
+    if (forma === 'fiado' && !cliente) return toast('Selecione um cliente para vender fiado.', 'alerta')
     setPags([...pags, { forma, valor: v }])
   }
 

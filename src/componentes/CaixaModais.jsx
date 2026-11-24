@@ -7,6 +7,7 @@ import { imprimirFechamento } from '../lib/cupom'
 import { Modal, Campo, Botao, useAcao } from './ui'
 import { Input } from './Input'
 import { SkeletonLinhas } from './Skeleton'
+import { confirmar, toast } from '../lib/notificar'
 
 /* Busca o caixa aberto do usuário logado: undefined = carregando, null = fechado */
 export function useCaixaAberto() {
@@ -117,9 +118,9 @@ export function FecharCaixa({ caixa, config, onFechar, onFechado }) {
   const dif = contado === '' || !r ? null : Math.round((parseNum(contado) - Number(r.dinheiro_esperado)) * 100) / 100
   const fechar = () => executar(async () => {
     if (contado === '') throw new Error('Conte o dinheiro da gaveta e informe o valor')
-    if (dif !== 0 && !confirm(`Há ${dif > 0 ? 'sobra' : 'falta'} de ${brl(Math.abs(dif))}. Fechar mesmo assim?`)) throw new Error('Fechamento cancelado')
+    if (dif !== 0 && !(await confirmar({ titulo: dif > 0 ? 'Sobra no caixa' : 'Falta no caixa', mensagem: `O valor contado está ${brl(Math.abs(dif))} ${dif > 0 ? 'acima' : 'abaixo'} do esperado. Deseja fechar mesmo assim?`, tipo: 'alerta', confirmar: 'Fechar caixa', cancelar: 'Recontar' }))) return null
     return checar(await supabase.rpc('fechar_caixa', { p_valor_contado: parseNum(contado), p_obs: sanitizar(obs, 500) || null, p_caixa: caixa.id }))
-  }, 'Caixa fechado').then((res) => setFinal(res), () => {})
+  }).then((res) => { if (res) { setFinal(res); toast('Caixa fechado') } }, () => {})
 
   if (final) return (
     <Modal titulo={`Caixa #${final.caixa.id} fechado`} onFechar={onFechado} rodape={<>

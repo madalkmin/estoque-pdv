@@ -60,8 +60,6 @@ tr.nova td { animation: linha-nova 1.2s var(--ease-out); }
 .modal { animation: entrar-escala .28s var(--ease-out) both; box-shadow: var(--sombra-3); }
 .modal-fundo.saindo { animation: sumir .18s ease forwards; }
 .modal-fundo.saindo .modal { animation: sair-escala .18s ease forwards; }
-.aviso div { animation: toast-entrar .35s var(--ease-spring) both; display: flex; align-items: center; gap: 10px; }
-.aviso div.saindo { animation: toast-sair .25s ease forwards; }
 .sugestoes { animation: entrar-escala .18s var(--ease-out); transform-origin: top; }
 .sugestoes button { transition: background .12s; }
 

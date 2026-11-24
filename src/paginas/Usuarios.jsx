@@ -6,6 +6,7 @@ import { Cabecalho, useAcao } from '../componentes/ui'
 import { SkeletonLinhas } from '../componentes/Skeleton'
 import Select from '../componentes/Select'
 import Tabela from '../componentes/Tabela'
+import { confirmar } from '../lib/notificar'
 
 export default function Usuarios() {
   const { perfil } = useAuth()
@@ -34,7 +35,7 @@ export default function Usuarios() {
               render: (u) => (u.ativo ? <span className="selo ok">Ativo</span> : <span className="selo alerta">Aguardando</span>) },
           ]}
           acoes={(u) => u.id !== perfil.id && (u.ativo
-            ? <button className="btn btn-perigo" onClick={() => confirm(`Bloquear o acesso de ${u.nome}?`) && alterar(u, { ativo: false }, 'Acesso bloqueado')}>Bloquear</button>
+            ? <button className="btn btn-perigo" onClick={async () => (await confirmar({ titulo: 'Bloquear acesso?', mensagem: `${u.nome} não conseguirá mais entrar no sistema até ser liberado de novo.`, tipo: 'perigo', confirmar: 'Bloquear' })) && alterar(u, { ativo: false }, 'Acesso bloqueado')}>Bloquear</button>
             : <button className="btn btn-primario" onClick={() => alterar(u, { ativo: true }, 'Acesso liberado')}>Liberar acesso</button>)}
         />
       </div>

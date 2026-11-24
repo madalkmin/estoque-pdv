@@ -108,9 +108,6 @@ td.direita, th.direita { text-align: right; }
 .modal-corpo { padding: 18px; overflow-y: auto; }
 .modal-rodape { padding: 14px 18px; border-top: 1px solid var(--borda); display: flex; justify-content: flex-end; gap: 8px; }
 
-.aviso { position: fixed; bottom: 20px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
-.aviso div { background: var(--texto); color: var(--superficie); padding: 11px 16px; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.2); max-width: 360px; }
-.aviso div.erro { background: var(--perigo); color: #fff; }
 
 .abas { display: flex; gap: 4px; border-bottom: 1px solid var(--borda); margin-bottom: 16px; overflow-x: auto; }
 .abas button { background: none; border: 0; padding: 10px 14px; font: inherit; font-weight: 600; color: var(--texto-suave); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }

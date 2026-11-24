@@ -6,6 +6,7 @@ import { aplicarTema } from './aplicarTema'
 import './estilos.css'
 import './estilos-componentes.css'
 import './estilos-tabela-data.css'
+import './estilos-avisos.css'
 
 aplicarTema()
 

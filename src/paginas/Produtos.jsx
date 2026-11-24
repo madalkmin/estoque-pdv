@@ -10,6 +10,7 @@ import Select from '../componentes/Select'
 import Checkbox from '../componentes/Checkbox'
 import { Input } from '../componentes/Input'
 import Tabela from '../componentes/Tabela'
+import { confirmar } from '../lib/notificar'
 
 const novaVariacao = () => ({ nome: 'Padrão', sku: '', codigo_barras: '', preco_custo: '', preco_venda: '', estoque: '', estoque_minimo: '' })
 
@@ -117,7 +118,7 @@ function EditarProduto({ produto, categorias, onFechar, onSalvo }) {
   }
 
   async function excluir() {
-    if (!confirm('Desativar este produto? Ele some das listas, mas o histórico de vendas é mantido.')) return
+    if (!(await confirmar({ titulo: 'Desativar produto?', mensagem: 'Ele some das listas e do caixa, mas o histórico de vendas é mantido.', tipo: 'perigo', confirmar: 'Desativar' }))) return
     await executar(async () => checar(await supabase.from('produtos').update({ ativo: false }).eq('id', produto.id)), 'Produto desativado')
     onSalvo()
   }
@@ -202,7 +203,7 @@ function Categorias({ categorias, onFechar }) {
       <div className="tabela-wrap" style={{ marginTop: 10 }}><table><tbody>
         {lista.map((c) => (
           <tr key={c.id}><td>{c.nome}</td><td className="direita">
-            <button className="btn btn-icone btn-fantasma btn-perigo" onClick={() => confirm(`Excluir "${c.nome}"?`) && executar(async () => { checar(await supabase.from('categorias').delete().eq('id', c.id)); await recarregar() }).catch(() => {})}><Trash2 size={15} /></button>
+            <button className="btn btn-icone btn-fantasma btn-perigo" onClick={async () => (await confirmar({ titulo: 'Excluir categoria?', mensagem: `"${c.nome}" será excluída. Produtos dela ficam sem categoria.`, tipo: 'perigo', confirmar: 'Excluir' })) && executar(async () => { checar(await supabase.from('categorias').delete().eq('id', c.id)); await recarregar() }).catch(() => {})}><Trash2 size={15} /></button>
           </td></tr>
         ))}
         {!lista.length && <tr><td className="vazio">Nenhuma categoria</td></tr>}

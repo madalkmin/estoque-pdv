@@ -2,31 +2,11 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { X, Package, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { tema } from '../tema'
+import { useAviso } from './Avisos'
+import { humanizarErro } from '../lib/notificar'
 
-/* ---------- Avisos (toasts) ---------- */
-const AvisoCtx = createContext(() => {})
-export function AvisoProvider({ children }) {
-  const [lista, setLista] = useState([])
-  const avisar = useCallback((texto, tipo = 'ok') => {
-    const id = Math.random()
-    setLista((l) => [...l.slice(-3), { id, texto, tipo }])
-    setTimeout(() => setLista((l) => l.map((a) => (a.id === id ? { ...a, saindo: true } : a))), 3600)
-    setTimeout(() => setLista((l) => l.filter((a) => a.id !== id)), 3900)
-  }, [])
-  return (
-    <AvisoCtx.Provider value={avisar}>
-      {children}
-      <div className="aviso" role="status" aria-live="polite">
-        {lista.map((a) => (
-          <div key={a.id} className={a.tipo + (a.saindo ? ' saindo' : '')}>
-            {a.tipo === 'erro' ? <AlertCircle size={17} /> : <CheckCircle2 size={17} />}{a.texto}
-          </div>
-        ))}
-      </div>
-    </AvisoCtx.Provider>
-  )
-}
-export const useAviso = () => useContext(AvisoCtx)
+/* ---------- Avisos (toasts) e diálogos: ver Avisos.jsx ---------- */
+export { AvisoProvider, useAviso, useDialogo } from './Avisos'
 
 /* ---------- Efeito de onda nos botões (global) ---------- */
 export function useOndaBotoes() {
@@ -127,7 +107,7 @@ export function useAcao() {
       if (msgOk) avisar(msgOk)
       return r
     } catch (e) {
-      avisar(e.message || 'Erro inesperado', 'erro')
+      avisar(humanizarErro(e), 'erro')
       throw e
     } finally {
       setOcupado(false)

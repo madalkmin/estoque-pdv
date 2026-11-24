@@ -4,6 +4,7 @@ import { Input } from './Input'
 import { supabase, checar } from '../lib/supabase'
 import { validacoes, sanitizar, mascaras } from '../lib/mascaras'
 import { parseNum } from '../lib/formato'
+import { confirmar } from '../lib/notificar'
 
 // Formulário genérico de cadastro (clientes, fornecedores)
 // campo: { chave, rotulo, mascara?, tipo?, numero?, texto?, inteiro?, max? }
@@ -35,7 +36,7 @@ export function FormCadastro({ tabela, titulo, registro, campos, onFechar, onSal
     else checar(await supabase.from(tabela).insert(dados))
   }, 'Salvo com sucesso').then(onSalvo, () => {})
 
-  const excluir = () => confirm('Desativar este cadastro?') &&
+  const excluir = async () => (await confirmar({ titulo: 'Desativar cadastro?', mensagem: 'Ele deixa de aparecer nas listas, mas o histórico é mantido.', tipo: 'perigo', confirmar: 'Desativar' })) &&
     executar(async () => checar(await supabase.from(tabela).update({ ativo: false }).eq('id', registro.id)), 'Cadastro desativado').then(onSalvo, () => {})
 
   const set = (k) => (e) => { setF({ ...f, [k]: e.target.value }); if (erros[k]) setErros({ ...erros, [k]: null }) }
