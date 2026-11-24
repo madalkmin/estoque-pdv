@@ -6,7 +6,9 @@ import { useAuth } from '../lib/auth'
 import { brl, num, parseNum, formasPagamento, nomeVariacao } from '../lib/formato'
 import { gerarPix } from '../lib/pix'
 import { imprimirCupom } from '../lib/cupom'
-import { Modal, Campo, useAcao, useAviso } from '../componentes/ui'
+import { Modal, Campo, useAcao, useAviso, Botao } from '../componentes/ui'
+import { Input } from '../componentes/Input'
+import { sanitizar, validacoes } from '../lib/mascaras'
 
 const iconesForma = { dinheiro: Banknote, pix: QrCode, credito: CreditCard, debito: Wallet, fiado: NotebookPen }
 
@@ -24,6 +26,7 @@ export default function PDV() {
   const [pagando, setPagando] = useState(false)
   const [escolherCliente, setEscolherCliente] = useState(false)
   const [concluida, setConcluida] = useState(null)
+  const [ultimo, setUltimo] = useState(null)
   const buscaRef = useRef()
 
   async function carregar() {
@@ -55,6 +58,7 @@ export default function PDV() {
       if (existe) return c.map((i) => (i.id === v.id ? { ...i, quantidade: i.quantidade + qtd } : i))
       return [...c, { id: v.id, rotulo: v.rotulo, preco: Number(v.preco_venda), estoque: Number(v.estoque), quantidade: qtd }]
     })
+    setUltimo({ id: v.id, t: Date.now() })
     if (Number(v.estoque) < qtd) avisar(`Atenção: "${v.rotulo}" está com estoque ${num(v.estoque)}`, 'erro')
     setBusca(''); setFoco(0)
     buscaRef.current?.focus()
@@ -120,7 +124,7 @@ export default function PDV() {
             <thead><tr><th>Item</th><th>Qtd</th><th className="direita">Unitário</th><th className="direita">Total</th><th /></tr></thead>
             <tbody>
               {carrinho.map((i) => (
-                <tr key={i.id}>
+                <tr key={i.id + (ultimo?.id === i.id ? '-' + ultimo.t : '')} className={ultimo?.id === i.id ? 'nova' : ''}>
                   <td style={{ whiteSpace: 'normal' }}>{i.rotulo}</td>
                   <td><div className="qtd">
                     <button className="btn btn-icone" onClick={() => setQtd(i.id, i.quantidade - 1)} disabled={i.quantidade <= 1}><Minus size={14} /></button>
@@ -154,9 +158,9 @@ export default function PDV() {
         <div className="resumo-linha"><span className="suave">Subtotal</span><span className="num">{brl(subtotal)}</span></div>
         <div className="resumo-linha" style={{ alignItems: 'center' }}>
           <span className="suave">Desconto (R$)</span>
-          <input style={{ width: 110, textAlign: 'right' }} inputMode="decimal" value={desconto} onChange={(e) => setDesconto(e.target.value)} placeholder="0,00" />
+          <Input style={{ width: 110, textAlign: 'right' }} mascara="decimal" value={desconto} onChange={(e) => setDesconto(e.target.value)} />
         </div>
-        <div style={{ margin: '14px 0' }}><div className="suave">Total</div><div className="resumo-total">{brl(total)}</div></div>
+        <div style={{ margin: '14px 0' }}><div className="suave">Total</div><div className="resumo-total mudou" key={total}>{brl(total)}</div></div>
         <button className="btn btn-primario btn-grande" style={{ width: '100%' }} disabled={!carrinho.length} onClick={() => setPagando(true)}>Finalizar venda <kbd style={{ marginLeft: 6 }}>F2</kbd></button>
         <button className="btn btn-fantasma" style={{ width: '100%', marginTop: 8 }} disabled={!carrinho.length} onClick={() => confirm('Cancelar esta venda?') && limpar()}>Cancelar venda</button>
       </div>
@@ -229,7 +233,7 @@ function Pagamento({ total, cliente, config, onFechar, onConfirmar }) {
   return (
     <Modal titulo="Pagamento" onFechar={onFechar} rodape={<>
       <button className="btn" onClick={onFechar}>Voltar</button>
-      <button className="btn btn-sucesso btn-grande" disabled={falta > 0 || ocupado} onClick={() => executar(() => onConfirmar(pags)).catch(() => {})}><Check size={18} /> Concluir venda</button>
+      <Botao className="btn-sucesso btn-grande" carregando={ocupado} disabled={falta > 0} onClick={() => executar(() => onConfirmar(pags)).catch(() => {})}>{!ocupado && <Check size={18} />} Concluir venda</Botao>
     </>}>
       <div className="linha" style={{ justifyContent: 'space-between', marginBottom: 14 }}>
         <div><div className="suave">Total</div><div className="resumo-total">{brl(total)}</div></div>
@@ -246,7 +250,7 @@ function Pagamento({ total, cliente, config, onFechar, onConfirmar }) {
           })}
         </div>
         <div className="linha" style={{ marginTop: 12 }}>
-          <input ref={valorRef} autoFocus inputMode="decimal" style={{ flex: 1, height: 46, fontSize: 18 }} value={valor} onChange={(e) => setValor(e.target.value)} />
+          <Input ref={valorRef} autoFocus mascara="decimal" className="inp-grande" style={{ height: 46, fontSize: 18 }} value={valor} onChange={(e) => setValor(e.target.value)} />
           <button className="btn btn-primario" style={{ height: 46 }}>Adicionar</button>
         </div>
         {forma === 'fiado' && cliente && <p className="suave">Saldo devedor atual de {cliente.nome}: {brl(cliente.saldo || 0)}</p>}
@@ -267,19 +271,21 @@ function SelecionarCliente({ clientes, onFechar, onEscolher, onCriado }) {
   const [t, setT] = useState('')
   const [novo, setNovo] = useState(null)
   const [executar, ocupado] = useAcao()
-  const lista = clientes.filter((c) => c.nome.toLowerCase().includes(t.toLowerCase()) || c.telefone?.includes(t) || c.documento?.includes(t)).slice(0, 30)
+  const dig = t.replace(/\D/g, '')
+  const lista = clientes.filter((c) => c.nome.toLowerCase().includes(t.toLowerCase()) || (dig && (c.telefone?.replace(/\D/g, '').includes(dig) || c.documento?.replace(/\D/g, '').includes(dig)))).slice(0, 30)
 
   if (novo) return (
     <Modal titulo="Novo cliente" onFechar={() => setNovo(null)} rodape={<>
       <button className="btn" onClick={() => setNovo(null)}>Voltar</button>
-      <button className="btn btn-primario" disabled={ocupado || !novo.nome.trim()} onClick={() => executar(async () => {
-        const c = checar(await supabase.from('clientes').insert({ nome: novo.nome.trim(), telefone: novo.telefone || null }).select().single())
+      <Botao className="btn-primario" carregando={ocupado} disabled={!novo.nome.trim()} onClick={() => executar(async () => {
+        const tel = validacoes.telefone(novo.telefone); if (tel !== true) throw new Error(tel)
+        const c = checar(await supabase.from('clientes').insert({ nome: sanitizar(novo.nome, 120), telefone: novo.telefone || null }).select().single())
         onCriado(); onEscolher({ ...c, saldo: 0 })
-      }, 'Cliente cadastrado').catch(() => {})}>Salvar</button>
+      }, 'Cliente cadastrado').catch(() => {})}>Salvar</Botao>
     </>}>
       <div className="form">
-        <Campo label="Nome"><input autoFocus value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} /></Campo>
-        <Campo label="Telefone"><input value={novo.telefone} onChange={(e) => setNovo({ ...novo, telefone: e.target.value })} /></Campo>
+        <Campo label="Nome"><Input autoFocus maxLength={120} value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} /></Campo>
+        <Campo label="Telefone"><Input mascara="telefone" value={novo.telefone} onChange={(e) => setNovo({ ...novo, telefone: e.target.value })} /></Campo>
       </div>
     </Modal>
   )

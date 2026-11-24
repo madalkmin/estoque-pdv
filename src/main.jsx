@@ -4,6 +4,7 @@ import { HashRouter } from 'react-router-dom'
 import App from './App'
 import { aplicarTema } from './aplicarTema'
 import './estilos.css'
+import './estilos-componentes.css'
 
 aplicarTema()
 

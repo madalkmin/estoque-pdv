@@ -2,10 +2,15 @@ import { useEffect, useMemo, useState } from 'react'
 import { Plus, Trash2, Eye } from 'lucide-react'
 import { supabase, checar } from '../lib/supabase'
 import { brl, num, dataHora, parseNum, nomeVariacao } from '../lib/formato'
-import { Cabecalho, Campo, Modal, useAcao } from '../componentes/ui'
+import { Cabecalho, Campo, Modal, useAcao, Botao } from '../componentes/ui'
+import { mascaras, sanitizar } from '../lib/mascaras'
+import { SkeletonLinhas } from '../componentes/Skeleton'
+import Select from '../componentes/Select'
+import Checkbox from '../componentes/Checkbox'
+import { Input } from '../componentes/Input'
 
 export default function Compras() {
-  const [lista, setLista] = useState([])
+  const [lista, setLista] = useState(null)
   const [nova, setNova] = useState(false)
   const [vendo, setVendo] = useState(null)
   const carregar = () => supabase.from('compras').select('*, fornecedores(nome), perfis(nome)').order('criado_em', { ascending: false }).limit(200).then(({ data }) => setLista(data || []))
@@ -20,13 +25,14 @@ export default function Compras() {
         <div className="tabela-wrap"><table>
           <thead><tr><th>#</th><th>Data</th><th>Fornecedor</th><th>Observações</th><th>Usuário</th><th className="direita">Total</th><th /></tr></thead>
           <tbody>
-            {lista.map((c) => (
+            {lista === null && <SkeletonLinhas colunas={7} />}
+            {(lista || []).map((c) => (
               <tr key={c.id}><td>#{c.id}</td><td className="suave">{dataHora(c.criado_em)}</td><td>{c.fornecedores?.nome || '—'}</td>
                 <td className="suave">{c.observacoes || '—'}</td><td className="suave">{c.perfis?.nome || '—'}</td>
                 <td className="direita num"><b>{brl(c.total)}</b></td>
                 <td className="direita"><button className="btn btn-icone btn-fantasma" onClick={() => setVendo(c)} aria-label="Detalhes"><Eye size={16} /></button></td></tr>
             ))}
-            {!lista.length && <tr><td colSpan={7} className="vazio">Nenhuma compra registrada</td></tr>}
+            {lista && !lista.length && <tr><td colSpan={7} className="vazio">Nenhuma compra registrada</td></tr>}
           </tbody>
         </table></div>
       </div>
@@ -58,7 +64,7 @@ function NovaCompra({ onFechar, onSalvo }) {
   }, [busca, catalogo])
 
   const add = (v) => {
-    if (!itens.find((i) => i.id === v.id)) setItens([...itens, { id: v.id, rotulo: v.rotulo, quantidade: '1', custo: String(v.preco_custo).replace('.', ',') }])
+    if (!itens.find((i) => i.id === v.id)) setItens([...itens, { id: v.id, rotulo: v.rotulo, quantidade: '1', custo: mascaras.decimal(Number(v.preco_custo).toFixed(2).replace('.', ',')) }])
     setBusca('')
   }
   const setI = (id, k, val) => setItens(itens.map((i) => (i.id === id ? { ...i, [k]: val } : i)))
@@ -68,23 +74,18 @@ function NovaCompra({ onFechar, onSalvo }) {
     <Modal largo titulo="Nova compra" onFechar={onFechar} rodape={<>
       <span style={{ marginRight: 'auto', fontWeight: 700 }}>Total: {brl(total)}</span>
       <button className="btn" onClick={onFechar}>Cancelar</button>
-      <button className="btn btn-primario" disabled={ocupado || !itens.length} onClick={() => executar(async () => checar(await supabase.rpc('registrar_compra', { p: {
-        fornecedor_id: fornecedor || null, observacoes: obs || null, atualizar_custo: atualizarCusto,
+      <Botao className="btn-primario" carregando={ocupado} disabled={!itens.length} onClick={() => executar(async () => checar(await supabase.rpc('registrar_compra', { p: {
+        fornecedor_id: fornecedor || null, observacoes: sanitizar(obs) || null, atualizar_custo: atualizarCusto,
         itens: itens.map((i) => ({ variacao_id: i.id, quantidade: parseNum(i.quantidade), custo_unitario: parseNum(i.custo) })),
-      } })), 'Compra registrada e estoque atualizado').then(onSalvo, () => {})}>Registrar compra</button>
+      } })), 'Compra registrada e estoque atualizado').then(onSalvo, () => {})}>Registrar compra</Botao>
     </>}>
       <div className="form">
         <Campo label="Fornecedor">
-          <select value={fornecedor} onChange={(e) => setFornecedor(e.target.value)}>
-            <option value="">Sem fornecedor</option>
-            {fornecedores.map((f) => <option key={f.id} value={f.id}>{f.nome}</option>)}
-          </select>
+          <Select value={fornecedor} onChange={setFornecedor} limpar placeholder="Sem fornecedor" options={fornecedores.map((f) => ({ value: f.id, label: f.nome }))} />
         </Campo>
-        <Campo label="Observações (nº da nota, etc.)"><input value={obs} onChange={(e) => setObs(e.target.value)} /></Campo>
+        <Campo label="Observações (nº da nota, etc.)"><Input maxLength={200} value={obs} onChange={(e) => setObs(e.target.value)} /></Campo>
       </div>
-      <label className="linha" style={{ margin: '10px 0', cursor: 'pointer' }}>
-        <input type="checkbox" style={{ width: 16, height: 16 }} checked={atualizarCusto} onChange={(e) => setAtualizarCusto(e.target.checked)} /> Atualizar o preço de custo dos produtos
-      </label>
+      <div style={{ margin: '14px 0' }}><Checkbox checked={atualizarCusto} onChange={setAtualizarCusto} descricao="O custo informado aqui passa a ser o custo cadastrado do produto">Atualizar o preço de custo dos produtos</Checkbox></div>
       <div style={{ position: 'relative' }}>
         <input placeholder="Adicionar produto (nome ou código de barras)" value={busca} onChange={(e) => setBusca(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (sugestoes[0]) add(sugestoes[0]) } }} />
@@ -97,8 +98,8 @@ function NovaCompra({ onFechar, onSalvo }) {
         <tbody>
           {itens.map((i) => (
             <tr key={i.id}><td style={{ whiteSpace: 'normal' }}>{i.rotulo}</td>
-              <td><input style={{ width: 80 }} inputMode="decimal" value={i.quantidade} onChange={(e) => setI(i.id, 'quantidade', e.target.value)} /></td>
-              <td><input style={{ width: 110 }} inputMode="decimal" value={i.custo} onChange={(e) => setI(i.id, 'custo', e.target.value)} /></td>
+              <td><Input style={{ width: 80 }} mascara="quantidade" value={i.quantidade} onChange={(e) => setI(i.id, 'quantidade', e.target.value)} /></td>
+              <td><Input style={{ width: 110 }} mascara="decimal" value={i.custo} onChange={(e) => setI(i.id, 'custo', e.target.value)} /></td>
               <td className="direita num">{brl(parseNum(i.quantidade) * parseNum(i.custo))}</td>
               <td className="direita"><button className="btn btn-icone btn-fantasma btn-perigo" onClick={() => setItens(itens.filter((x) => x.id !== i.id))}><Trash2 size={15} /></button></td></tr>
           ))}
@@ -110,7 +111,7 @@ function NovaCompra({ onFechar, onSalvo }) {
 }
 
 function DetalheCompra({ compra, onFechar }) {
-  const [itens, setItens] = useState([])
+  const [itens, setItens] = useState(null)
   useEffect(() => {
     supabase.from('compra_itens').select('*, variacoes(nome, produtos(nome))').eq('compra_id', compra.id).then(({ data }) => setItens(data || []))
   }, [compra.id])
@@ -119,7 +120,7 @@ function DetalheCompra({ compra, onFechar }) {
       <p className="suave" style={{ marginTop: 0 }}>{dataHora(compra.criado_em)} · {compra.fornecedores?.nome || 'Sem fornecedor'}</p>
       <div className="tabela-wrap"><table>
         <thead><tr><th>Produto</th><th className="direita">Qtd</th><th className="direita">Custo</th><th className="direita">Subtotal</th></tr></thead>
-        <tbody>{itens.map((i) => (
+        <tbody>{itens === null && <SkeletonLinhas linhas={3} colunas={4} />}{(itens || []).map((i) => (
           <tr key={i.id}><td>{nomeVariacao(i.variacoes)}</td><td className="direita num">{num(i.quantidade)}</td><td className="direita num">{brl(i.custo_unitario)}</td><td className="direita num">{brl(i.quantidade * i.custo_unitario)}</td></tr>
         ))}</tbody>
       </table></div>

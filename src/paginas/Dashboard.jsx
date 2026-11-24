@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { brl, num, inicioDoDia, nomeVariacao, dataHora } from '../lib/formato'
 import { Cabecalho } from '../componentes/ui'
+import { SkeletonKpis, SkeletonCard } from '../componentes/Skeleton'
 
 export default function Dashboard() {
   const { perfil, admin } = useAuth()
@@ -37,7 +38,7 @@ export default function Dashboard() {
       <Cabecalho titulo={`Olá, ${perfil.nome.split(' ')[0]}`} descricao="Resumo do movimento da loja">
         <Link className="btn btn-primario" to="/caixa"><ShoppingCart size={16} /> Abrir caixa</Link>
       </Cabecalho>
-      {!d ? <p className="suave">Carregando…</p> : <>
+      {!d ? <><SkeletonKpis n={admin ? 4 : 2} /><div className="grade grade-2" style={{ marginTop: 16 }}><SkeletonCard /><SkeletonCard /></div></> : <>
         <div className="grade grade-4">
           <div className="card kpi"><small><DollarSign size={15} /> Vendido hoje</small><b>{brl(d.fatHoje)}</b></div>
           <div className="card kpi"><small><Receipt size={15} /> Vendas hoje</small><b>{d.qtdHoje}</b></div>

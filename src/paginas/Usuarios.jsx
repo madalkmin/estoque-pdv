@@ -3,10 +3,12 @@ import { supabase, checar } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { data } from '../lib/formato'
 import { Cabecalho, useAcao } from '../componentes/ui'
+import { SkeletonLinhas } from '../componentes/Skeleton'
+import Select from '../componentes/Select'
 
 export default function Usuarios() {
   const { perfil } = useAuth()
-  const [lista, setLista] = useState([])
+  const [lista, setLista] = useState(null)
   const [executar] = useAcao()
   const carregar = () => supabase.from('perfis').select('*').order('criado_em').then(({ data }) => setLista(data || []))
   useEffect(() => { carregar() }, [])
@@ -20,7 +22,8 @@ export default function Usuarios() {
         <div className="tabela-wrap"><table>
           <thead><tr><th>Nome</th><th>E-mail</th><th>Desde</th><th>Papel</th><th>Situação</th><th /></tr></thead>
           <tbody>
-            {lista.map((u) => {
+            {lista === null && <SkeletonLinhas linhas={3} colunas={6} />}
+            {(lista || []).map((u) => {
               const eu = u.id === perfil.id
               return (
                 <tr key={u.id}>
@@ -28,9 +31,8 @@ export default function Usuarios() {
                   <td className="suave">{u.email}</td>
                   <td className="suave">{data(u.criado_em)}</td>
                   <td>
-                    <select value={u.papel} disabled={eu} style={{ width: 150, height: 32 }} onChange={(e) => alterar(u, { papel: e.target.value }, 'Papel atualizado')}>
-                      <option value="operador">Operador</option><option value="admin">Administrador</option>
-                    </select>
+                    <Select tamanho="p" value={u.papel} disabled={eu} style={{ width: 170 }} onChange={(v) => v !== u.papel && alterar(u, { papel: v }, 'Papel atualizado')}
+                      options={[{ value: 'operador', label: 'Operador', descricao: 'Caixa e consultas' }, { value: 'admin', label: 'Administrador', descricao: 'Acesso total' }]} />
                   </td>
                   <td>{u.ativo ? <span className="selo ok">Ativo</span> : <span className="selo alerta">Aguardando</span>}</td>
                   <td className="direita">

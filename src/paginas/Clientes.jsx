@@ -5,19 +5,23 @@ import { useAuth } from '../lib/auth'
 import { brl, dataHora, parseNum, formasPagamento } from '../lib/formato'
 import { Cabecalho, Campo, Modal, useAcao } from '../componentes/ui'
 import { FormCadastro } from '../componentes/Cadastro'
+import { SkeletonLinhas } from '../componentes/Skeleton'
+import Select from '../componentes/Select'
+import Checkbox from '../componentes/Checkbox'
+import { Input } from '../componentes/Input'
 
 const campos = [
   { chave: 'nome', rotulo: 'Nome' },
-  { chave: 'telefone', rotulo: 'Telefone' },
-  { chave: 'documento', rotulo: 'CPF/CNPJ' },
-  { chave: 'email', rotulo: 'E-mail' },
+  { chave: 'telefone', rotulo: 'Telefone', mascara: 'telefone' },
+  { chave: 'documento', rotulo: 'CPF/CNPJ', mascara: 'cpfCnpj' },
+  { chave: 'email', rotulo: 'E-mail', tipo: 'email' },
   { chave: 'limite_fiado', rotulo: 'Limite de fiado (R$, 0 = sem limite)', numero: true },
   { chave: 'observacoes', rotulo: 'Observações', texto: true, inteiro: true },
 ]
 
 export default function Clientes() {
   const { admin } = useAuth()
-  const [lista, setLista] = useState([])
+  const [lista, setLista] = useState(null)
   const [busca, setBusca] = useState('')
   const [soDevedores, setSoDevedores] = useState(false)
   const [editando, setEditando] = useState(null)
@@ -34,10 +38,10 @@ export default function Clientes() {
   }
   useEffect(() => { carregar() }, [])
 
-  const filtrada = useMemo(() => lista.filter((c) =>
+  const filtrada = useMemo(() => (lista || []).filter((c) =>
     (!soDevedores || c.saldo > 0) &&
-    (c.nome.toLowerCase().includes(busca.toLowerCase()) || c.telefone?.includes(busca) || c.documento?.includes(busca))), [lista, busca, soDevedores])
-  const totalAReceber = lista.reduce((s, c) => s + Math.max(0, c.saldo), 0)
+    (c.nome.toLowerCase().includes(busca.toLowerCase()) || (!!busca.replace(/\D/g, '') && (c.telefone?.replace(/\D/g, '').includes(busca.replace(/\D/g, '')) || c.documento?.replace(/\D/g, '').includes(busca.replace(/\D/g, '')))))), [lista, busca, soDevedores])
+  const totalAReceber = (lista || []).reduce((s, c) => s + Math.max(0, c.saldo), 0)
 
   return (
     <>
@@ -47,11 +51,12 @@ export default function Clientes() {
       <div className="card">
         <div className="linha" style={{ marginBottom: 14 }}>
           <div className="busca"><Search size={16} /><input placeholder="Buscar cliente" value={busca} onChange={(e) => setBusca(e.target.value)} /></div>
-          <label className="linha" style={{ cursor: 'pointer' }}><input type="checkbox" style={{ width: 16, height: 16 }} checked={soDevedores} onChange={(e) => setSoDevedores(e.target.checked)} /> Só com fiado em aberto</label>
+          <Checkbox interruptor checked={soDevedores} onChange={setSoDevedores}>Só com fiado em aberto</Checkbox>
         </div>
         <div className="tabela-wrap"><table>
           <thead><tr><th>Nome</th><th>Telefone</th><th>Documento</th><th className="direita">Limite</th><th className="direita">Saldo devedor</th><th /></tr></thead>
           <tbody>
+            {lista === null && <SkeletonLinhas colunas={6} />}
             {filtrada.map((c) => (
               <tr key={c.id}>
                 <td><b>{c.nome}</b></td>
@@ -66,7 +71,7 @@ export default function Clientes() {
                 </td>
               </tr>
             ))}
-            {!filtrada.length && <tr><td colSpan={6} className="vazio">Nenhum cliente</td></tr>}
+            {lista && !filtrada.length && <tr><td colSpan={6} className="vazio">Nenhum cliente</td></tr>}
           </tbody>
         </table></div>
       </div>
@@ -95,11 +100,9 @@ function Receber({ cliente, onFechar, onSalvo }) {
     </>}>
       <p className="suave" style={{ marginTop: 0 }}>Saldo devedor: <b>{brl(cliente.saldo)}</b></p>
       <div className="form">
-        <Campo label="Valor (R$)"><input autoFocus inputMode="decimal" value={valor} onChange={(e) => setValor(e.target.value)} /></Campo>
+        <Campo label="Valor (R$)"><Input autoFocus mascara="decimal" value={valor} onChange={(e) => setValor(e.target.value)} /></Campo>
         <Campo label="Forma">
-          <select value={forma} onChange={(e) => setForma(e.target.value)}>
-            {Object.entries(formasPagamento).filter(([k]) => k !== 'fiado').map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
+          <Select value={forma} onChange={setForma} options={Object.entries(formasPagamento).filter(([k]) => k !== 'fiado').map(([value, label]) => ({ value, label }))} />
         </Campo>
         <Campo label="Observação" inteiro><input value={obs} onChange={(e) => setObs(e.target.value)} /></Campo>
       </div>
@@ -125,7 +128,7 @@ function Historico({ cliente, onFechar }) {
 
   return (
     <Modal largo titulo={`Histórico — ${cliente.nome}`} onFechar={onFechar}>
-      {!linhas ? <p className="suave">Carregando…</p> : <div className="tabela-wrap"><table>
+      {!linhas ? <table><tbody><SkeletonLinhas linhas={5} colunas={4} /></tbody></table> : <div className="tabela-wrap"><table>
         <thead><tr><th>Data</th><th>Descrição</th><th className="direita">Valor</th><th className="direita">Fiado</th></tr></thead>
         <tbody>
           {linhas.map((l, i) => (

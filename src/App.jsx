@@ -5,7 +5,7 @@ import {
   BarChart3, UserCog, Settings, LogOut, Menu, Moon, Sun,
 } from 'lucide-react'
 import { AuthProvider, useAuth } from './lib/auth'
-import { AvisoProvider, Marca } from './componentes/ui'
+import { AvisoProvider, Marca, TelaCarregando, useOndaBotoes } from './componentes/ui'
 import { aplicarTema, modoAtual } from './aplicarTema'
 import Login from './paginas/Login'
 import Dashboard from './paginas/Dashboard'
@@ -43,13 +43,14 @@ function SoAdmin({ children }) {
 }
 
 function Casca() {
-  const { sessao, perfil, admin, carregando, sair } = useAuth()
+  const { sessao, perfil, admin, carregando, sair, recuperando } = useAuth()
+  useOndaBotoes()
   const [aberto, setAberto] = useState(false)
   const [modo, setModo] = useState(modoAtual())
   const local = useLocation()
 
-  if (carregando) return <div className="login suave">Carregando…</div>
-  if (!sessao) return <Login />
+  if (carregando) return <TelaCarregando />
+  if (!sessao || recuperando) return <Login />
   if (!perfil?.ativo) return (
     <div className="login"><div className="card">
       <Marca />
@@ -84,6 +85,7 @@ function Casca() {
         </div>
       </aside>
       <main className="conteudo">
+        <div className="pagina" key={local.pathname}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/caixa" element={<PDV />} />
@@ -98,6 +100,7 @@ function Casca() {
           <Route path="/configuracoes" element={<SoAdmin><Configuracoes /></SoAdmin>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </div>
       </main>
     </div>
   )

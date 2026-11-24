@@ -8,7 +8,8 @@ export const data = (d) => new Date(d).toLocaleDateString('pt-BR')
 export const parseNum = (s) => {
   if (typeof s === 'number') return s
   const t = String(s ?? '').trim()
-  const n = parseFloat(t.includes(',') ? t.replace(/\./g, '').replace(',', '.') : t)
+  const milhar = /^-?\d{1,3}(\.\d{3})+$/.test(t)
+  const n = parseFloat(t.includes(',') || milhar ? t.replace(/\./g, '').replace(',', '.') : t)
   return Number.isFinite(n) ? n : 0
 }
 

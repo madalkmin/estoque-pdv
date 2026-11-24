@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { supabase } from '../lib/supabase'
 import { brl, num, formasPagamento, nomeVariacao } from '../lib/formato'
 import { Cabecalho } from '../componentes/ui'
+import { SkeletonKpis, SkeletonCard } from '../componentes/Skeleton'
 
 const iso = (d) => d.toLocaleDateString('sv-SE')
 
@@ -68,7 +69,7 @@ export default function Relatorios() {
         <input type="date" value={ate} onChange={(e) => setAte(e.target.value)} style={{ width: 160 }} />
         {r && <button className="btn" onClick={exportarCSV}>Exportar CSV</button>}
       </Cabecalho>
-      {!r ? <p className="suave">Carregando…</p> : <>
+      {!r ? <><SkeletonKpis /><div style={{ marginTop: 16 }}><SkeletonCard altura={240} /></div></> : <>
         <div className="grade grade-4">
           <div className="card kpi"><small>Faturamento</small><b>{brl(r.fat)}</b></div>
           <div className="card kpi"><small>Lucro bruto</small><b>{brl(r.lucro)}</b><small>{r.fat ? ((r.lucro / r.fat) * 100).toFixed(1) : 0}% de margem</small></div>
