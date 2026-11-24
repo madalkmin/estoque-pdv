@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, ShoppingCart, Package, ArrowLeftRight, Receipt, Users, Truck, ShoppingBag,
-  BarChart3, UserCog, Settings, LogOut, Menu, Moon, Sun,
+  BarChart3, UserCog, Settings, LogOut, Menu, Moon, Sun, Wallet,
 } from 'lucide-react'
 import { AuthProvider, useAuth } from './lib/auth'
 import { AvisoProvider, Marca, TelaCarregando, useOndaBotoes } from './componentes/ui'
@@ -10,6 +10,7 @@ import { aplicarTema, modoAtual } from './aplicarTema'
 import Login from './paginas/Login'
 import Dashboard from './paginas/Dashboard'
 import PDV from './paginas/PDV'
+import Caixa from './paginas/Caixa'
 import Produtos from './paginas/Produtos'
 import Movimentacoes from './paginas/Movimentacoes'
 import Vendas from './paginas/Vendas'
@@ -24,6 +25,7 @@ const menu = [
   { secao: 'Operação' },
   { to: '/', icone: LayoutDashboard, texto: 'Início', fim: true },
   { to: '/caixa', icone: ShoppingCart, texto: 'Caixa (PDV)' },
+  { to: '/controle-caixa', icone: Wallet, texto: 'Abrir/fechar caixa' },
   { to: '/vendas', icone: Receipt, texto: 'Vendas' },
   { to: '/clientes', icone: Users, texto: 'Clientes e fiado' },
   { secao: 'Estoque' },
@@ -89,6 +91,7 @@ function Casca() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/caixa" element={<PDV />} />
+          <Route path="/controle-caixa" element={<Caixa />} />
           <Route path="/vendas" element={<Vendas />} />
           <Route path="/clientes" element={<Clientes />} />
           <Route path="/produtos" element={<Produtos />} />

@@ -41,3 +41,45 @@ export function imprimirCupom({ venda, itens, pagamentos, cliente, config, opera
   w.document.write(html)
   w.document.close()
 }
+
+// Relatório de fechamento de caixa (mesma impressora do cupom)
+export function imprimirFechamento(r, config) {
+  const largura = config?.largura_cupom || '80mm'
+  const c = r.caixa
+  const row = (a, b, cls = '') => `<div class="row ${cls}"><span>${esc(a)}</span><span>${esc(b)}</span></div>`
+  const formas = Object.entries(r.por_forma || {}).map(([f, v]) => row('  ' + (formasPagamento[f] || f), brl(v))).join('')
+  const fiado = Object.entries(r.fiado_recebido || {}).map(([f, v]) => row('  ' + (formasPagamento[f] || f), brl(v))).join('')
+  const dif = Number(c.diferenca || 0)
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Fechamento #${c.id}</title>
+  <style>
+    @page { size: ${largura} auto; margin: 0 }
+    body { font-family: 'Courier New', monospace; font-size: ${largura === '58mm' ? '10px' : '12px'}; width: ${largura}; margin: 0; padding: 3mm; box-sizing: border-box; color:#000 }
+    .c { text-align: center } .b { font-weight: bold } hr { border: 0; border-top: 1px dashed #000; margin: 4px 0 }
+    .row { display: flex; justify-content: space-between; gap: 6px; white-space: pre }
+  </style></head><body>
+    <div class="c b">${esc(config?.nome_loja)}</div>
+    <hr><div class="c b">FECHAMENTO DE CAIXA #${c.id}</div>
+    ${row('Operador', c.operador || '')}
+    ${row('Abertura', dataHora(c.aberto_em))}
+    ${c.fechado_em ? row('Fechamento', dataHora(c.fechado_em)) : ''}
+    <hr>
+    ${row('Fundo inicial', brl(c.valor_abertura))}
+    ${row(`Vendas (${r.vendas_qtd})`, brl(r.vendas_total), 'b')}
+    ${formas}
+    ${fiado ? row('Fiado recebido', '') + fiado : ''}
+    ${row('Suprimentos', '+' + brl(r.suprimentos))}
+    ${row('Sangrias', '-' + brl(r.sangrias))}
+    ${r.canceladas_qtd ? row(`Canceladas (${r.canceladas_qtd})`, brl(r.canceladas_total)) : ''}
+    <hr>
+    ${row('Dinheiro esperado', brl(r.dinheiro_esperado), 'b')}
+    ${c.valor_contado != null ? row('Dinheiro contado', brl(c.valor_contado), 'b') : ''}
+    ${c.valor_contado != null ? row(dif > 0 ? 'Sobra' : dif < 0 ? 'Falta' : 'Diferença', brl(Math.abs(dif)), 'b') : ''}
+    ${c.observacoes ? `<hr><div>Obs.: ${esc(c.observacoes)}</div>` : ''}
+    <br><br><div class="c">______________________________</div><div class="c">Assinatura</div>
+    <script>window.onload = () => { window.print(); setTimeout(() => window.close(), 300) }</script>
+  </body></html>`
+  const w = window.open('', '_blank', 'width=400,height=600')
+  if (!w) return alert('Permita pop-ups para imprimir.')
+  w.document.write(html)
+  w.document.close()
+}

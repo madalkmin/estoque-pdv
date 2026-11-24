@@ -8,6 +8,7 @@ import { FormCadastro } from '../componentes/Cadastro'
 import { SkeletonLinhas } from '../componentes/Skeleton'
 import Select from '../componentes/Select'
 import Checkbox from '../componentes/Checkbox'
+import { mascaras } from '../lib/mascaras'
 import { Input } from '../componentes/Input'
 import Tabela from '../componentes/Tabela'
 
@@ -82,7 +83,7 @@ export default function Clientes() {
 }
 
 function Receber({ cliente, onFechar, onSalvo }) {
-  const [valor, setValor] = useState(cliente.saldo.toFixed(2).replace('.', ','))
+  const [valor, setValor] = useState(mascaras.moedaDe(cliente.saldo))
   const [forma, setForma] = useState('dinheiro')
   const [obs, setObs] = useState('')
   const [executar, ocupado] = useAcao()

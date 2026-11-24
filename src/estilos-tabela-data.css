@@ -132,3 +132,24 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--primaria); outl
 /* campo de moeda alinhado com a coluna (texto termina na borda como o título) */
 .inp-moeda { width: 120px; height: 32px; text-align: right; font-variant-numeric: tabular-nums; }
 td.direita > .inp-moeda { margin-right: -12px; }
+
+/* =========================================================
+   CAIXA
+   ========================================================= */
+.btn-perigo-cheio { background: var(--perigo); border-color: var(--perigo); color: #fff; }
+.caixa-resumo .resumo-linha.sub { padding: 3px 0 3px 14px; font-size: 13px; color: var(--texto-suave); }
+.caixa-resumo .resumo-linha.destaque { margin-top: 8px; padding: 12px 14px; border-radius: 10px; background: color-mix(in srgb, var(--primaria) 8%, transparent); }
+.caixa-resumo .resumo-linha.destaque b { font-size: 18px; color: var(--primaria); }
+.caixa-status { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.caixa-status-info { display: flex; align-items: center; gap: 12px; }
+.caixa-pulso { width: 10px; height: 10px; border-radius: 99px; background: var(--sucesso); box-shadow: 0 0 0 0 color-mix(in srgb, var(--sucesso) 60%, transparent); animation: caixa-pulso 2s infinite; flex-shrink: 0; }
+.caixa-pulso.fechado { background: var(--texto-suave); animation: none; }
+@keyframes caixa-pulso { 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+.caixa-vazio { text-align: center; padding: 40px 16px; display: grid; justify-items: center; gap: 10px; }
+.caixa-vazio-icone { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; background: color-mix(in srgb, var(--primaria) 10%, transparent); color: var(--primaria); }
+.caixa-vazio h2 { margin: 4px 0 0; font-size: 18px; }
+.caixa-vazio p { margin: 0; color: var(--texto-suave); max-width: 380px; }
+.pdv-caixa { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; }
+.pdv-caixa.fechado { border-color: color-mix(in srgb, var(--alerta) 50%, var(--borda)); background: color-mix(in srgb, var(--alerta) 8%, var(--superficie)); }
+.pdv-caixa .btn { height: 30px; font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .caixa-pulso { animation: none; } }

@@ -9,6 +9,8 @@ import { imprimirCupom } from '../lib/cupom'
 import { Modal, Campo, useAcao, useAviso, Botao } from '../componentes/ui'
 import { Input } from '../componentes/Input'
 import { sanitizar, validacoes, mascaras } from '../lib/mascaras'
+import { Link } from 'react-router-dom'
+import { useCaixaAberto, AbrirCaixa, MovimentoCaixa } from '../componentes/CaixaModais'
 
 const iconesForma = { dinheiro: Banknote, pix: QrCode, credito: CreditCard, debito: Wallet, fiado: NotebookPen }
 
@@ -28,6 +30,8 @@ export default function PDV() {
   const [concluida, setConcluida] = useState(null)
   const [ultimo, setUltimo] = useState(null)
   const buscaRef = useRef()
+  const [caixa, recarregarCaixa] = useCaixaAberto()
+  const [modalCaixa, setModalCaixa] = useState(null)
 
   async function carregar() {
     const [v, c, cfg] = await Promise.all([
@@ -83,12 +87,12 @@ export default function PDV() {
 
   useEffect(() => {
     const k = (e) => {
-      if (e.key === 'F2' && carrinho.length && !pagando) { e.preventDefault(); setPagando(true) }
+      if (e.key === 'F2' && carrinho.length && !pagando && caixa) { e.preventDefault(); setPagando(true) }
       if (e.key === 'F4') { e.preventDefault(); setEscolherCliente(true) }
     }
     window.addEventListener('keydown', k)
     return () => window.removeEventListener('keydown', k)
-  }, [carrinho.length, pagando])
+  }, [carrinho.length, pagando, caixa])
 
   const setQtd = (id, q) => setCarrinho((c) => c.map((i) => (i.id === id ? { ...i, quantidade: Math.max(0.001, q) } : i)))
   const setPreco = (id, p) => setCarrinho((c) => c.map((i) => (i.id === id ? { ...i, preco: p } : i)))
@@ -96,6 +100,23 @@ export default function PDV() {
   function limpar() { setCarrinho([]); setCliente(null); setDesconto(''); buscaRef.current?.focus() }
 
   return (
+    <>
+    {caixa === null && (
+      <div className="card pdv-caixa fechado">
+        <span className="linha"><span className="caixa-pulso fechado" /><b>Caixa fechado.</b> <span className="suave">Abra o caixa para registrar vendas.</span></span>
+        <button className="btn btn-primario" onClick={() => setModalCaixa('abrir')}>Abrir caixa</button>
+      </div>
+    )}
+    {caixa && (
+      <div className="card pdv-caixa">
+        <span className="linha"><span className="caixa-pulso" /><b>Caixa #{caixa.id} aberto</b></span>
+        <span className="linha">
+          <button className="btn btn-fantasma" onClick={() => setModalCaixa('suprimento')}>Suprimento</button>
+          <button className="btn btn-fantasma" onClick={() => setModalCaixa('sangria')}>Sangria</button>
+          <Link className="btn" to="/controle-caixa">Fechar caixa</Link>
+        </span>
+      </div>
+    )}
     <div className="pdv">
       <div>
         <div className="card">
@@ -164,7 +185,7 @@ export default function PDV() {
           <Input style={{ width: 130, textAlign: 'right' }} mascara="moeda" value={desconto} onChange={(e) => setDesconto(e.target.value)} />
         </div>
         <div style={{ margin: '14px 0' }}><div className="suave">Total</div><div className="resumo-total mudou" key={total}>{brl(total)}</div></div>
-        <button className="btn btn-primario btn-grande" style={{ width: '100%' }} disabled={!carrinho.length} onClick={() => setPagando(true)}>Finalizar venda <kbd className="kbd-btn">F2</kbd></button>
+        <button className="btn btn-primario btn-grande" style={{ width: '100%' }} disabled={!carrinho.length || !caixa} onClick={() => setPagando(true)}>Finalizar venda <kbd className="kbd-btn">F2</kbd></button>
         <button className="btn btn-fantasma" style={{ width: '100%', marginTop: 8 }} disabled={!carrinho.length} onClick={() => confirm('Cancelar esta venda?') && limpar()}>Cancelar venda</button>
       </div>
 
@@ -199,7 +220,12 @@ export default function PDV() {
           </div>
         </Modal>
       )}
+      {modalCaixa === 'abrir' && <AbrirCaixa onFechar={() => setModalCaixa(null)} onAberto={() => { setModalCaixa(null); recarregarCaixa(); buscaRef.current?.focus() }} />}
+      {(modalCaixa === 'sangria' || modalCaixa === 'suprimento') && (
+        <MovimentoCaixa tipo={modalCaixa} onFechar={() => setModalCaixa(null)} onSalvo={() => { setModalCaixa(null); buscaRef.current?.focus() }} />
+      )}
     </div>
+    </>
   )
 }
 
