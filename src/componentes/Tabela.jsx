@@ -1,10 +1,31 @@
 import { useMemo, useRef, useState } from 'react'
 import { ArrowUp, ArrowDown, ArrowUpDown, Filter, Search, X } from 'lucide-react'
 import { Popover } from './Popover'
-import CampoData, { paraISO } from './CampoData'
+import { paraISO } from './CampoData'
 import { SkeletonLinhas } from './Skeleton'
-import { parseNum } from '../lib/formato'
-import { mascaras } from '../lib/mascaras'
+
+const brData = (iso) => iso.split('-').reverse().join('/')
+
+// chave usada para agrupar valores no filtro (datas agrupadas por dia)
+function chaveFiltro(c, v) {
+  if (v == null || v === '') return ''
+  if (c.tipo === 'data') return paraISO(new Date(v))
+  if (c.tipo === 'numero') return String(Number(v))
+  return String(v)
+}
+
+// texto exibido para uma opção do filtro
+function rotuloFiltro(c, k, linha) {
+  if (k === '') return '(vazio)'
+  if (c.rotulo) return String(c.rotulo(k))
+  if (c.tipo === 'data') return brData(k)
+  if (linha && c.render) {
+    const r = c.render(linha)
+    if (typeof r === 'string' || typeof r === 'number') return String(r)
+  }
+  if (c.tipo === 'numero') return Number(k).toLocaleString('pt-BR', { maximumFractionDigits: 3 })
+  return k
+}
 
 const normalizar = (s) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
@@ -33,19 +54,7 @@ export default function Tabela({ colunas, dados, chave = (l) => l.id, vazio = 'N
     let r = dados.filter((l) => colunas.every((c) => {
       const f = filtros[c.chave]
       if (f == null) return true
-      const v = valorDe(c, l)
-      switch (c.tipo) {
-        case 'numero': {
-          const n = Number(v)
-          return (f.min === '' || f.min == null || n >= parseNum(f.min)) && (f.max === '' || f.max == null || n <= parseNum(f.max))
-        }
-        case 'data': {
-          const iso = v ? paraISO(new Date(v)) : ''
-          return (!f.de || iso >= f.de) && (!f.ate || iso <= f.ate)
-        }
-        case 'opcoes': return f.includes(String(v ?? ''))
-        default: return normalizar(v).includes(normalizar(f))
-      }
+      return f.includes(chaveFiltro(c, valorDe(c, l)))
     }))
     if (ordem) {
       const c = colunas.find((x) => x.chave === ordem.chave)
@@ -145,13 +154,7 @@ export default function Tabela({ colunas, dados, chave = (l) => l.id, vazio = 'N
 }
 
 function descreverFiltro(c, f) {
-  if (c.tipo === 'numero') return [f.min !== '' && f.min != null && `≥ ${f.min}`, f.max !== '' && f.max != null && `≤ ${f.max}`].filter(Boolean).join(' e ')
-  if (c.tipo === 'data') {
-    const br = (s) => s.split('-').reverse().join('/')
-    return f.de && f.ate ? `${br(f.de)} – ${br(f.ate)}` : f.de ? `desde ${br(f.de)}` : `até ${br(f.ate)}`
-  }
-  if (c.tipo === 'opcoes') return f.length === 1 ? (c.rotulo ? c.rotulo(f[0]) : f[0]) || '(vazio)' : `${f.length} selecionados`
-  return `contém “${f}”`
+  return f.length === 1 ? rotuloFiltro(c, f[0]) : `${f.length} selecionados`
 }
 
 function FiltroColuna({ coluna: c, dados, valorDe, valor, aberto, setAberto, onAplicar, ativo }) {
@@ -171,56 +174,40 @@ function FiltroColuna({ coluna: c, dados, valorDe, valor, aberto, setAberto, onA
 }
 
 function PainelFiltro({ c, dados, valorDe, valor, aplicar }) {
-  const tipo = c.tipo || 'texto'
-  const [texto, setTexto] = useState(tipo === 'texto' ? valor || '' : '')
-  const [faixa, setFaixa] = useState(tipo === 'numero' ? valor || { min: '', max: '' } : { min: '', max: '' })
-  const [datas, setDatas] = useState(tipo === 'data' ? valor || { de: '', ate: '' } : { de: '', ate: '' })
   const opcoes = useMemo(() => {
-    if (tipo !== 'opcoes') return []
-    const cont = new Map()
-    dados.forEach((l) => { const v = String(valorDe(l) ?? ''); cont.set(v, (cont.get(v) || 0) + 1) })
-    return [...cont.entries()].map(([v, n]) => ({ v, n, r: (c.rotulo ? c.rotulo(v) : v) || '(vazio)' }))
-      .sort((a, b) => a.r.localeCompare(b.r, 'pt-BR', { numeric: true }))
-  }, [dados, tipo])
-  const [marcados, setMarcados] = useState(() => new Set(tipo === 'opcoes' ? valor || opcoes.map((o) => o.v) : []))
+    const mapa = new Map()
+    dados.forEach((l) => {
+      const k = chaveFiltro(c, valorDe(l))
+      const o = mapa.get(k)
+      if (o) o.n++
+      else mapa.set(k, { v: k, n: 1, r: rotuloFiltro(c, k, l) })
+    })
+    const lista = [...mapa.values()]
+    if (c.tipo === 'numero') return lista.sort((a, b) => (a.v === '') - (b.v === '') || Number(a.v) - Number(b.v))
+    if (c.tipo === 'data') return lista.sort((a, b) => (a.v === '') - (b.v === '') || b.v.localeCompare(a.v))
+    return lista.sort((a, b) => a.r.localeCompare(b.r, 'pt-BR', { numeric: true, sensitivity: 'base' }))
+  }, [dados])
+  const [marcados, setMarcados] = useState(() => new Set(valor || opcoes.map((o) => o.v)))
   const [busca, setBusca] = useState('')
 
   function confirmar(e) {
     e?.preventDefault()
-    if (tipo === 'texto') aplicar(texto.trim() ? texto.trim() : null)
-    if (tipo === 'numero') aplicar(faixa.min === '' && faixa.max === '' ? null : faixa)
-    if (tipo === 'data') aplicar(!datas.de && !datas.ate ? null : datas)
-    if (tipo === 'opcoes') aplicar(marcados.size === opcoes.length ? null : [...marcados])
+    aplicar(marcados.size === opcoes.length ? null : [...marcados])
   }
 
   const filtradas = opcoes.filter((o) => normalizar(o.r).includes(normalizar(busca)))
+  const todosVis = filtradas.length > 0 && filtradas.every((o) => marcados.has(o.v))
   const alternar = (v) => setMarcados((m) => { const n = new Set(m); n.has(v) ? n.delete(v) : n.add(v); return n })
 
   return (
     <form className="filtro" onSubmit={confirmar}>
       <div className="filtro-titulo"><Filter size={13} /> Filtrar “{c.titulo}”</div>
-      {tipo === 'texto' && (
-        <div className="filtro-busca"><Search size={14} /><input autoFocus placeholder="Contém…" value={texto} onChange={(e) => setTexto(e.target.value)} /></div>
-      )}
-      {tipo === 'numero' && (
-        <div className="filtro-faixa">
-          <label>Mínimo<input autoFocus inputMode="decimal" placeholder="—" value={faixa.min} onChange={(e) => setFaixa({ ...faixa, min: mascaras.decimal(e.target.value) })} /></label>
-          <label>Máximo<input inputMode="decimal" placeholder="—" value={faixa.max} onChange={(e) => setFaixa({ ...faixa, max: mascaras.decimal(e.target.value) })} /></label>
-        </div>
-      )}
-      {tipo === 'data' && (
-        <div className="filtro-faixa">
-          <label>De<CampoData value={datas.de} max={datas.ate || undefined} limpar onChange={(v) => setDatas({ ...datas, de: v })} /></label>
-          <label>Até<CampoData value={datas.ate} min={datas.de || undefined} limpar onChange={(v) => setDatas({ ...datas, ate: v })} /></label>
-        </div>
-      )}
-      {tipo === 'opcoes' && <>
-        {opcoes.length > 6 && <div className="filtro-busca"><Search size={14} /><input autoFocus placeholder="Buscar…" value={busca} onChange={(e) => setBusca(e.target.value)} /></div>}
+      {opcoes.length > 6 && <div className="filtro-busca"><Search size={14} /><input autoFocus placeholder="Buscar…" value={busca} onChange={(e) => setBusca(e.target.value)} /></div>}
         <div className="filtro-lista">
           <label className="filtro-op filtro-todos">
-            <input type="checkbox" checked={marcados.size === opcoes.length} onChange={(e) => setMarcados(new Set(e.target.checked ? opcoes.map((o) => o.v) : []))} />
-            <span className={'chk-caixa' + (marcados.size === opcoes.length ? ' marcado' : '')}><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" /></svg></span>
-            <span>(Selecionar todos)</span>
+            <input type="checkbox" checked={todosVis} onChange={(e) => setMarcados((m) => { const n = new Set(m); filtradas.forEach((o) => (e.target.checked ? n.add(o.v) : n.delete(o.v))); return n })} />
+            <span className={'chk-caixa' + (todosVis ? ' marcado' : '')}><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" /></svg></span>
+            <span>{busca ? '(Selecionar resultados)' : '(Selecionar todos)'}</span>
           </label>
           {filtradas.map((o) => (
             <label key={o.v} className="filtro-op">
@@ -231,10 +218,9 @@ function PainelFiltro({ c, dados, valorDe, valor, aplicar }) {
           ))}
           {!filtradas.length && <div className="sel-nada">Nada encontrado</div>}
         </div>
-      </>}
       <div className="filtro-acoes">
         <button type="button" className="btn btn-fantasma" onClick={() => aplicar(null)}>Limpar</button>
-        <button type="submit" className="btn btn-primario" disabled={tipo === 'opcoes' && !marcados.size}>Aplicar</button>
+        <button type="submit" className="btn btn-primario" disabled={!marcados.size}>Aplicar</button>
       </div>
     </form>
   )
