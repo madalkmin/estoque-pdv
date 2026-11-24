@@ -67,7 +67,7 @@ function NovaCompra({ onFechar, onSalvo }) {
   }, [busca, catalogo])
 
   const add = (v) => {
-    if (!itens.find((i) => i.id === v.id)) setItens([...itens, { id: v.id, rotulo: v.rotulo, quantidade: '1', custo: mascaras.decimal(Number(v.preco_custo).toFixed(2).replace('.', ',')) }])
+    if (!itens.find((i) => i.id === v.id)) setItens([...itens, { id: v.id, rotulo: v.rotulo, quantidade: '1', custo: mascaras.moedaDe(v.preco_custo || 0) }])
     setBusca('')
   }
   const setI = (id, k, val) => setItens(itens.map((i) => (i.id === id ? { ...i, [k]: val } : i)))
@@ -102,7 +102,7 @@ function NovaCompra({ onFechar, onSalvo }) {
           {itens.map((i) => (
             <tr key={i.id}><td style={{ whiteSpace: 'normal' }}>{i.rotulo}</td>
               <td><Input style={{ width: 80 }} mascara="quantidade" value={i.quantidade} onChange={(e) => setI(i.id, 'quantidade', e.target.value)} /></td>
-              <td><Input style={{ width: 110 }} mascara="decimal" value={i.custo} onChange={(e) => setI(i.id, 'custo', e.target.value)} /></td>
+              <td><Input style={{ width: 130 }} mascara="moeda" value={i.custo} onChange={(e) => setI(i.id, 'custo', e.target.value)} /></td>
               <td className="direita num">{brl(parseNum(i.quantidade) * parseNum(i.custo))}</td>
               <td className="direita"><button className="btn btn-icone btn-fantasma btn-perigo" onClick={() => setItens(itens.filter((x) => x.id !== i.id))}><Trash2 size={15} /></button></td></tr>
           ))}

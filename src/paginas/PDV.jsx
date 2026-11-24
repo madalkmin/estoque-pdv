@@ -133,7 +133,7 @@ export default function PDV() {
                   </div></td>
                   <td className="direita num">
                     {admin
-                      ? <input className="inp-moeda" inputMode="numeric" value={mascaras.moeda(Math.round(i.preco * 100))}
+                      ? <input className="inp-moeda" inputMode="numeric" value={mascaras.moedaDe(i.preco)}
                           onChange={(e) => setPreco(i.id, Number(e.target.value.replace(/\D/g, '').slice(0, 13) || 0) / 100)}
                           onFocus={(e) => { const el = e.target; requestAnimationFrame(() => el.setSelectionRange(el.value.length, el.value.length)) }}
                           title="Preço editável pelo administrador" />
@@ -161,7 +161,7 @@ export default function PDV() {
         <div className="resumo-linha"><span className="suave">Subtotal</span><span className="num">{brl(subtotal)}</span></div>
         <div className="resumo-linha" style={{ alignItems: 'center' }}>
           <span className="suave">Desconto (R$)</span>
-          <Input style={{ width: 110, textAlign: 'right' }} mascara="decimal" value={desconto} onChange={(e) => setDesconto(e.target.value)} />
+          <Input style={{ width: 130, textAlign: 'right' }} mascara="moeda" value={desconto} onChange={(e) => setDesconto(e.target.value)} />
         </div>
         <div style={{ margin: '14px 0' }}><div className="suave">Total</div><div className="resumo-total mudou" key={total}>{brl(total)}</div></div>
         <button className="btn btn-primario btn-grande" style={{ width: '100%' }} disabled={!carrinho.length} onClick={() => setPagando(true)}>Finalizar venda <kbd className="kbd-btn">F2</kbd></button>
@@ -215,7 +215,7 @@ function Pagamento({ total, cliente, config, onFechar, onConfirmar }) {
   const falta = Math.max(0, Math.round((total - pago) * 100) / 100)
   const troco = Math.max(0, Math.round((pago - total) * 100) / 100)
 
-  useEffect(() => { setValor(falta ? falta.toFixed(2).replace('.', ',') : ''); valorRef.current?.select() }, [falta, forma])
+  useEffect(() => { setValor(falta ? mascaras.moedaDe(falta) : ''); valorRef.current?.select() }, [falta, forma])
 
   useEffect(() => {
     const pix = pags.filter((p) => p.forma === 'pix').reduce((s, p) => s + p.valor, 0)
@@ -253,7 +253,7 @@ function Pagamento({ total, cliente, config, onFechar, onConfirmar }) {
           })}
         </div>
         <div className="linha" style={{ marginTop: 12 }}>
-          <Input ref={valorRef} autoFocus mascara="decimal" className="inp-grande" style={{ height: 46, fontSize: 18 }} value={valor} onChange={(e) => setValor(e.target.value)} />
+          <Input ref={valorRef} autoFocus mascara="moeda" className="inp-grande" style={{ height: 46, fontSize: 18 }} value={valor} onChange={(e) => setValor(e.target.value)} />
           <button className="btn btn-primario" style={{ height: 46 }}>Adicionar</button>
         </div>
         {forma === 'fiado' && cliente && <p className="suave">Saldo devedor atual de {cliente.nome}: {brl(cliente.saldo || 0)}</p>}

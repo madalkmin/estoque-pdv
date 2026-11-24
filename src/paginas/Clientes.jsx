@@ -98,7 +98,7 @@ function Receber({ cliente, onFechar, onSalvo }) {
     </>}>
       <p className="suave" style={{ marginTop: 0 }}>Saldo devedor: <b>{brl(cliente.saldo)}</b></p>
       <div className="form">
-        <Campo label="Valor (R$)"><Input autoFocus mascara="decimal" value={valor} onChange={(e) => setValor(e.target.value)} /></Campo>
+        <Campo label="Valor (R$)"><Input autoFocus mascara="moeda" value={valor} onChange={(e) => setValor(e.target.value)} /></Campo>
         <Campo label="Forma">
           <Select value={forma} onChange={setForma} options={Object.entries(formasPagamento).filter(([k]) => k !== 'fiado').map(([value, label]) => ({ value, label }))} />
         </Campo>

@@ -17,6 +17,8 @@ export const mascaras = {
   codigoBarras: (v) => digitos(v, 14),
   // Moeda estilo caixa eletrônico: dígitos entram pelos centavos -> "R$ 1.234,56"
   moeda: (v) => 'R$ ' + (Number(String(v ?? '').replace(/\D/g, '').slice(0, 13) || 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+  // número -> "R$ 1.234,56" (valor inicial de campos com máscara moeda)
+  moedaDe: (n) => (n === '' || n == null ? '' : mascaras.moeda(Math.round(Number(n) * 100))),
   // Moeda: "1234,5" -> "1.234,50" (aceita digitação livre)
   decimal: (v) => {
     let s = String(v ?? '').replace(/[^\d,]/g, '')

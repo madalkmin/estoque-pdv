@@ -11,7 +11,7 @@ export function FormCadastro({ tabela, titulo, registro, campos, onFechar, onSal
   const [f, setF] = useState(() => Object.fromEntries(campos.map((c) => {
     const v = registro?.[c.chave]
     if (v == null) return [c.chave, '']
-    if (c.numero) return [c.chave, Number(v) ? mascaras.decimal(String(Number(v).toFixed(2)).replace('.', ',')) : '']
+    if (c.numero) return [c.chave, Number(v) ? mascaras.moedaDe(v) : '']
     return [c.chave, c.mascara ? mascaras[c.mascara](v) : v]
   })))
   const [erros, setErros] = useState({})
@@ -51,7 +51,7 @@ export function FormCadastro({ tabela, titulo, registro, campos, onFechar, onSal
           <Campo key={c.chave} label={c.rotulo} inteiro={c.inteiro}>
             {c.texto
               ? <textarea maxLength={1000} value={f[c.chave]} onChange={set(c.chave)} />
-              : <Input autoFocus={i === 0} type={c.tipo} mascara={c.numero ? 'decimal' : c.mascara} maxLength={c.max} value={f[c.chave]} onChange={set(c.chave)} erro={erros[c.chave]} />}
+              : <Input autoFocus={i === 0} type={c.tipo} mascara={c.numero ? 'moeda' : c.mascara} maxLength={c.max} value={f[c.chave]} onChange={set(c.chave)} erro={erros[c.chave]} />}
           </Campo>
         ))}
       </div>

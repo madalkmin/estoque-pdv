@@ -2,13 +2,13 @@ import { forwardRef, useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { mascaras, validacoes } from '../lib/mascaras'
 
-const limites = { cpf: 14, cnpj: 18, cpfCnpj: 18, telefone: 15, cep: 9, codigoBarras: 14, decimal: 16, quantidade: 12 }
-const teclados = { cpf: 'numeric', cnpj: 'numeric', cpfCnpj: 'numeric', telefone: 'tel', cep: 'numeric', codigoBarras: 'numeric', decimal: 'decimal', quantidade: 'decimal' }
-const placeholders = { cpf: '000.000.000-00', cnpj: '00.000.000/0000-00', cpfCnpj: 'CPF ou CNPJ', telefone: '(00) 00000-0000', cep: '00000-000', decimal: '0,00' }
+const limites = { cpf: 14, cnpj: 18, cpfCnpj: 18, telefone: 15, cep: 9, codigoBarras: 14, decimal: 16, quantidade: 12, moeda: 20 }
+const teclados = { cpf: 'numeric', cnpj: 'numeric', cpfCnpj: 'numeric', telefone: 'tel', cep: 'numeric', codigoBarras: 'numeric', decimal: 'decimal', quantidade: 'decimal', moeda: 'numeric' }
+const placeholders = { cpf: '000.000.000-00', cnpj: '00.000.000/0000-00', cpfCnpj: 'CPF ou CNPJ', telefone: '(00) 00000-0000', cep: '00000-000', decimal: '0,00', moeda: 'R$ 0,00' }
 
 /**
  * Input universal com máscara, validação no blur e ícone opcional.
- * mascara: cpf | cnpj | cpfCnpj | telefone | cep | codigoBarras | decimal | quantidade
+ * mascara: cpf | cnpj | cpfCnpj | telefone | cep | codigoBarras | decimal | moeda | quantidade
  * validar: nome de validação (cpf, cnpj, cpfCnpj, telefone, email) — por padrão usa a da máscara
  */
 export const Input = forwardRef(function Input({ mascara, validar, icone: Icone, value, onChange, onBlur, className = '', erro: erroExterno, style, ...resto }, ref) {

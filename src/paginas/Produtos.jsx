@@ -86,7 +86,7 @@ export default function Produtos() {
 function EditarProduto({ produto, categorias, onFechar, onSalvo }) {
   const novo = !produto.id
   const [p, setP] = useState({ nome: produto.nome, descricao: produto.descricao || '', categoria_id: produto.categoria_id || '' })
-  const dec = (n) => (n === '' || n == null ? '' : mascaras.decimal(String(Number(n).toFixed(2)).replace('.', ',')))
+  const dec = (n) => mascaras.moedaDe(n)
   const [vars, setVars] = useState(produto.variacoes.map((v) => ({ ...v, preco_custo: dec(v.preco_custo), preco_venda: dec(v.preco_venda), estoque_minimo: v.estoque_minimo ? String(Number(v.estoque_minimo)).replace('.', ',') : '' })))
   const [removidas, setRemovidas] = useState([])
   const [executar, ocupado] = useAcao()
@@ -146,8 +146,8 @@ function EditarProduto({ produto, categorias, onFechar, onSalvo }) {
             <Campo label="Nome"><Input maxLength={60} value={v.nome} placeholder="Ex.: M / Azul" onChange={(e) => setV(i, 'nome', e.target.value)} /></Campo>
             <Campo label="Código de barras"><Input maxLength={50} value={v.codigo_barras || ''} placeholder="Bipe ou digite" onChange={(e) => setV(i, 'codigo_barras', e.target.value)} /></Campo>
             <Campo label="SKU"><Input maxLength={40} value={v.sku || ''} onChange={(e) => setV(i, 'sku', e.target.value)} /></Campo>
-            <Campo label="Custo (R$)"><Input mascara="decimal" value={v.preco_custo} onChange={(e) => setV(i, 'preco_custo', e.target.value)} /></Campo>
-            <Campo label="Preço (R$)"><Input mascara="decimal" value={v.preco_venda} onChange={(e) => setV(i, 'preco_venda', e.target.value)} /></Campo>
+            <Campo label="Custo (R$)"><Input mascara="moeda" value={v.preco_custo} onChange={(e) => setV(i, 'preco_custo', e.target.value)} /></Campo>
+            <Campo label="Preço (R$)"><Input mascara="moeda" value={v.preco_venda} onChange={(e) => setV(i, 'preco_venda', e.target.value)} /></Campo>
             {!v.id && <Campo label="Estoque inicial"><Input mascara="quantidade" placeholder="0" value={v.estoque} onChange={(e) => setV(i, 'estoque', e.target.value)} /></Campo>}
             <Campo label="Estoque mínimo"><Input mascara="quantidade" placeholder="0" value={v.estoque_minimo} onChange={(e) => setV(i, 'estoque_minimo', e.target.value)} /></Campo>
           </div>

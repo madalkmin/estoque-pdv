@@ -7,7 +7,7 @@ export const data = (d) => new Date(d).toLocaleDateString('pt-BR')
 // Aceita "12,50" ou "12.50"
 export const parseNum = (s) => {
   if (typeof s === 'number') return s
-  const t = String(s ?? '').trim()
+  const t = String(s ?? '').replace(/R\$|\s/g, '')
   const milhar = /^-?\d{1,3}(\.\d{3})+$/.test(t)
   const n = parseFloat(t.includes(',') || milhar ? t.replace(/\./g, '').replace(',', '.') : t)
   return Number.isFinite(n) ? n : 0
