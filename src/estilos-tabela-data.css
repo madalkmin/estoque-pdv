@@ -70,7 +70,9 @@
    ========================================================= */
 .tab th { padding-top: 8px; padding-bottom: 8px; }
 .th { display: flex; align-items: center; gap: 2px; }
-th.direita .th { justify-content: flex-end; }
+/* colunas à direita: título encostado na borda, igual ao conteúdo; ícones vão para a esquerda */
+th.direita .th { flex-direction: row-reverse; justify-content: flex-start; }
+th.direita .th-titulo { flex-direction: row-reverse; margin-left: 0; margin-right: -6px; }
 .th-titulo {
   display: inline-flex; align-items: center; gap: 5px; border: 0; background: none; padding: 4px 6px; margin-left: -6px; border-radius: 6px;
   font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; transition: background .15s, color .15s;
@@ -124,3 +126,9 @@ th:hover .th-filtro, .th-filtro:focus-visible, .th-filtro.ativo, .th-filtro.aber
 
 button:focus-visible, a:focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; }
 .data-btn:focus-visible, .th-filtro:focus-visible, .cal-dia:focus-visible { outline-offset: 0; }
+
+/* ícone de atalho dentro de botão colorido */
+.kbd-btn { margin-left: 8px; background: rgb(255 255 255 / .2); border-color: rgb(255 255 255 / .35); color: inherit; font-weight: 700; font-size: 11px; line-height: 1.4; }
+/* campo de moeda alinhado com a coluna (texto termina na borda como o título) */
+.inp-moeda { width: 120px; height: 32px; text-align: right; font-variant-numeric: tabular-nums; }
+td.direita > .inp-moeda { margin-right: -12px; }

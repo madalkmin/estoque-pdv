@@ -8,7 +8,7 @@ import { gerarPix } from '../lib/pix'
 import { imprimirCupom } from '../lib/cupom'
 import { Modal, Campo, useAcao, useAviso, Botao } from '../componentes/ui'
 import { Input } from '../componentes/Input'
-import { sanitizar, validacoes } from '../lib/mascaras'
+import { sanitizar, validacoes, mascaras } from '../lib/mascaras'
 
 const iconesForma = { dinheiro: Banknote, pix: QrCode, credito: CreditCard, debito: Wallet, fiado: NotebookPen }
 
@@ -133,7 +133,10 @@ export default function PDV() {
                   </div></td>
                   <td className="direita num">
                     {admin
-                      ? <input style={{ width: 96, textAlign: 'right', height: 32 }} inputMode="decimal" defaultValue={i.preco.toFixed(2).replace('.', ',')} onBlur={(e) => setPreco(i.id, parseNum(e.target.value))} title="Preço editável pelo administrador" />
+                      ? <input className="inp-moeda" inputMode="numeric" value={mascaras.moeda(Math.round(i.preco * 100))}
+                          onChange={(e) => setPreco(i.id, Number(e.target.value.replace(/\D/g, '').slice(0, 13) || 0) / 100)}
+                          onFocus={(e) => { const el = e.target; requestAnimationFrame(() => el.setSelectionRange(el.value.length, el.value.length)) }}
+                          title="Preço editável pelo administrador" />
                       : brl(i.preco)}
                   </td>
                   <td className="direita num"><b>{brl(i.quantidade * i.preco)}</b></td>
@@ -161,7 +164,7 @@ export default function PDV() {
           <Input style={{ width: 110, textAlign: 'right' }} mascara="decimal" value={desconto} onChange={(e) => setDesconto(e.target.value)} />
         </div>
         <div style={{ margin: '14px 0' }}><div className="suave">Total</div><div className="resumo-total mudou" key={total}>{brl(total)}</div></div>
-        <button className="btn btn-primario btn-grande" style={{ width: '100%' }} disabled={!carrinho.length} onClick={() => setPagando(true)}>Finalizar venda <kbd style={{ marginLeft: 6 }}>F2</kbd></button>
+        <button className="btn btn-primario btn-grande" style={{ width: '100%' }} disabled={!carrinho.length} onClick={() => setPagando(true)}>Finalizar venda <kbd className="kbd-btn">F2</kbd></button>
         <button className="btn btn-fantasma" style={{ width: '100%', marginTop: 8 }} disabled={!carrinho.length} onClick={() => confirm('Cancelar esta venda?') && limpar()}>Cancelar venda</button>
       </div>
 
